@@ -1,19 +1,36 @@
 from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeoutError
-import pandas as pd
-import time
-import re
 import html
+import os
+import re
 import sys
+import time
+
+import pandas as pd
 
 if sys.platform == "win32" and hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
 # -----------------------------------
-# CONFIG
+# CONFIG — edit the two defaults on the next two lines, or override with env vars (below).
 # -----------------------------------
-excel_path = r"C:\Sofia\CRDC_CLI\TestData QA Env\GC March release\phs004225\Base counts for studies.xlsx"
-URL = "https://general-qa.datacommons.cancer.gov/#/data"
+DEFAULT_EXCEL_PATH = r"C:\Sofia\CRDC_CLI\TestData QA Env\GC March release\phs004225\Base counts for studies.xlsx"
+DEFAULT_DATA_COMMONS_URL = "https://general-qa.datacommons.cancer.gov/#/data"
+
+# Env overrides (optional): GC_PHS004225_EXCEL, DATA_COMMONS_URL
+# PowerShell:  $env:GC_PHS004225_EXCEL = "C:\path\Base counts for studies.xlsx"
+#              $env:DATA_COMMONS_URL = "https://general-qa2.datacommons.cancer.gov/#/data"
+# cmd:         set GC_PHS004225_EXCEL=...   set DATA_COMMONS_URL=...
+excel_path = os.environ.get("GC_PHS004225_EXCEL", DEFAULT_EXCEL_PATH).strip() or DEFAULT_EXCEL_PATH
+URL = os.environ.get("DATA_COMMONS_URL", DEFAULT_DATA_COMMONS_URL).strip() or DEFAULT_DATA_COMMONS_URL
+
+print("⚙️  Resolved config (env):")
+print(f"    DATA_COMMONS_URL → {URL}")
+print(f"    GC_PHS004225_EXCEL → {excel_path}")
+print(f"    CI → {os.environ.get('CI', '')!r}")
+print(f"    PLAYWRIGHT_HEADLESS → {os.environ.get('PLAYWRIGHT_HEADLESS', '')!r}")
+print(f"    PLAYWRIGHT_CHANNEL_CHROME → {os.environ.get('PLAYWRIGHT_CHANNEL_CHROME', '')!r}")
+
 PHS = "phs004225"
 
 results = []
@@ -128,22 +145,25 @@ def deselect_previous_study(page, prev_study):
 # -----------------------------------
 # HTML REPORT
 # -----------------------------------
-def generate_html_report(results):
-    html_doc = """
+def generate_html_report(results, *, page_url: str):
+    esc_url = html.escape(page_url, quote=True)
+    html_doc = f"""
     <html>
     <head>
         <title>QA Report</title>
         <style>
-            body { font-family: Arial; }
-            table { border-collapse: collapse; width: 100%; }
-            th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
-            th { background-color: #333; color: white; }
-            .pass { background-color: #d4edda; }
-            .fail { background-color: #f8d7da; }
+            body {{ font-family: Arial; }}
+            table {{ border-collapse: collapse; width: 100%; }}
+            th, td {{ border: 1px solid #ddd; padding: 8px; text-align: center; }}
+            th {{ background-color: #333; color: white; }}
+            .pass {{ background-color: #d4edda; }}
+            .fail {{ background-color: #f8d7da; }}
+            .meta {{ margin-bottom: 12px; color: #444; }}
         </style>
     </head>
     <body>
         <h2>Study QA Report</h2>
+        <p class="meta"><strong>URL:</strong> {esc_url}</p>
         <table>
             <tr>
                 <th>Study Name</th>
@@ -183,15 +203,40 @@ def generate_html_report(results):
         f.write(html_doc)
 
 
+def _playwright_launch_kwargs() -> dict:
+    """
+    Local Windows: headed Google Chrome. CI (CI=true or PLAYWRIGHT_HEADLESS=1): headless
+    bundled Chromium — run `playwright install chromium` on the agent.
+    Force Chrome channel on CI: PLAYWRIGHT_CHANNEL_CHROME=1 (must be installed on agent).
+    """
+    headless = os.environ.get("PLAYWRIGHT_HEADLESS", "").lower() in (
+        "1",
+        "true",
+        "yes",
+    ) or os.environ.get("CI", "").lower() in ("true", "1")
+    kw: dict = {"headless": headless}
+    force_chrome = os.environ.get("PLAYWRIGHT_CHANNEL_CHROME", "").lower() in (
+        "1",
+        "true",
+        "yes",
+    )
+    if force_chrome or (not headless and sys.platform == "win32"):
+        kw["channel"] = "chrome"
+    return kw
+
+
 # -----------------------------------
 # PLAYWRIGHT
 # -----------------------------------
 with sync_playwright() as p:
 
-    browser = p.chromium.launch(channel="chrome", headless=False)
+    _launch = _playwright_launch_kwargs()
+    print(f"⚙️  Playwright launch → {_launch}")
+    browser = p.chromium.launch(**_launch)
     page = browser.new_page()
 
     try:
+        print(f"🌐 DATA_COMMONS_URL → {URL}")
         page.goto(URL)
 
         try:
@@ -270,7 +315,7 @@ with sync_playwright() as p:
             except Exception as e:
                 print("❌ ERROR:", e)
 
-        generate_html_report(results)
+        generate_html_report(results, page_url=URL)
         print("\n📄 HTML report generated: QA_Report.html")
 
         print("\n🟢 Done")
