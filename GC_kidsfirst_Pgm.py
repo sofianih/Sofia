@@ -1,11 +1,14 @@
 """
 General QA Data Commons — Gabriella Miller / Kids First studies (five PHS + study pairs).
 
-Expected Participants / Samples / Files are **embedded in this file** by default (snapshot
-from Kidsfirst basecounts.xlsx) — no local path required.
+Expected Participants / Samples / Files are read from **Kidsfirst basecounts.xlsx** in the same
+folder as this script (the repo root when checked out at e.g. …\\git\\Sofia).
 
-Optional: set env **KIDS_FIRST_EXCEL_PATH** to a workbook path to load expectations from Excel
-instead (same layout: PHS Accession, Study Name, Participants, Samples, Files).
+Override with env **KIDS_FIRST_EXCEL_PATH** to point at another workbook (same layout: PHS
+Accession, Study Name, Participants, Samples, Files).
+
+Set env **KIDS_FIRST_DATA_COMMONS_URL** to override the Data Commons base URL (defaults to
+general-qa). Example (PowerShell): `$env:KIDS_FIRST_DATA_COMMONS_URL='https://…/#/data'`.
 """
 
 from __future__ import annotations
@@ -31,19 +34,19 @@ if sys.platform == "win32" and hasattr(sys.stdout, "reconfigure"):
 # -----------------------------------
 # CONFIG
 # -----------------------------------
-URL = "https://general-qa.datacommons.cancer.gov/#/data"
+_DEFAULT_DATA_COMMONS_URL = "https://general-qa.datacommons.cancer.gov/#/data"
 
 REPORT_PATH = "GC_kidsfirst_Pgm_Report.html"
 
-# Embedded base counts (same order as SCENARIOS). Source: Kidsfirst basecounts.xlsx
-# PHS | Participants | Samples | Files
-EMBEDDED_BASE_COUNTS: list[tuple[int, int, int]] = [
-    (1287, 1460, 49518),  # phs001228
-    (1776, 1776, 26788),  # phs001846
-    (60, 119, 3342),  # phs002187
-    (84, 311, 12727),  # phs001714
-    (185, 192, 4728),  # phs001738
-]
+
+def _data_commons_url() -> str:
+    """URL from env KIDS_FIRST_DATA_COMMONS_URL, or general-qa default."""
+    v = os.environ.get("KIDS_FIRST_DATA_COMMONS_URL", "").strip()
+    return v if v else _DEFAULT_DATA_COMMONS_URL
+
+
+_SCRIPT_DIR = Path(__file__).resolve().parent
+DEFAULT_BASECOUNTS_WORKBOOK = _SCRIPT_DIR / "Kidsfirst basecounts.xlsx"
 
 # (PHS accession, exact study name as in the Study Name filter list)
 SCENARIOS: list[tuple[str, str]] = [
@@ -74,8 +77,6 @@ SCENARIOS: list[tuple[str, str]] = [
     ),
 ]
 
-assert len(EMBEDDED_BASE_COUNTS) == len(SCENARIOS), "Embedded counts must match SCENARIOS"
-
 
 def _find_phs_column(df: pd.DataFrame) -> str | None:
     for c in df.columns:
@@ -93,7 +94,8 @@ def load_expectations_workbook(excel_path: str) -> pd.DataFrame:
     if not path.is_file():
         raise FileNotFoundError(
             f"Base counts Excel not found: {path}\n"
-            "Set env KIDS_FIRST_EXCEL_PATH or place a workbook at the default path.\n"
+            f"Place Kidsfirst basecounts.xlsx next to this script ({_SCRIPT_DIR}) or set "
+            "env KIDS_FIRST_EXCEL_PATH.\n"
             "Expected columns include: Study Name, Number of Participants, Samples, "
             "Number of Files (and optionally a PHS / PHS ACCESSION column)."
         )
@@ -163,18 +165,6 @@ def lookup_expected_counts(
     s = _col("Samples", "Number of Samples")
     f = _col("Number of Files", "Files", "Number of files")
     return p, s, f
-
-
-def get_expected_counts(
-    scenario_index: int,
-    phs: str,
-    study: str,
-    df: pd.DataFrame | None,
-) -> tuple[int, int, int]:
-    """Use Excel when `df` is provided; otherwise embedded constants for this index."""
-    if df is not None:
-        return lookup_expected_counts(df, phs, study)
-    return EMBEDDED_BASE_COUNTS[scenario_index]
 
 
 # -----------------------------------
@@ -351,7 +341,9 @@ def deselect_study(page, study_name: str) -> None:
     time.sleep(2)
 
 
-def generate_html_report(rows: list[dict], path: str = REPORT_PATH) -> None:
+def generate_html_report(
+    rows: list[dict], path: str = REPORT_PATH, *, page_url: str
+) -> None:
     doc = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -371,7 +363,7 @@ def generate_html_report(rows: list[dict], path: str = REPORT_PATH) -> None:
 </head>
 <body>
   <h1>Gabriella Miller / Kids First — count check report</h1>
-  <div class="meta"><strong>URL:</strong> {html.escape(URL)}</div>
+  <div class="meta"><strong>URL:</strong> {html.escape(page_url)}</div>
   <table>
     <thead>
       <tr>
@@ -414,12 +406,12 @@ def _fmt_cell(ui: int, exp: int) -> str:
 
 def run() -> None:
     excel_path = os.environ.get("KIDS_FIRST_EXCEL_PATH", "").strip()
-    df: pd.DataFrame | None = None
-    if excel_path:
-        print(f"📎 Loading expectations from Excel: {excel_path}")
-        df = load_expectations_workbook(excel_path)
-    else:
-        print("📎 Using embedded base counts (no KIDS_FIRST_EXCEL_PATH).")
+    workbook = Path(excel_path).expanduser() if excel_path else DEFAULT_BASECOUNTS_WORKBOOK
+    print(f"📎 Loading expectations from Excel: {workbook}")
+    df = load_expectations_workbook(str(workbook))
+
+    url = _data_commons_url()
+    print(f"🌐 Data Commons URL: {url}")
 
     results: list[dict] = []
 
@@ -427,7 +419,7 @@ def run() -> None:
         browser = p.chromium.launch(channel="chrome", headless=False)
         page = browser.new_page()
         try:
-            page.goto(URL, timeout=120_000, wait_until="domcontentloaded")
+            page.goto(url, timeout=120_000, wait_until="domcontentloaded")
             dismiss_continue_if_present(page)
             try:
                 page.wait_for_load_state("networkidle", timeout=90_000)
@@ -435,8 +427,8 @@ def run() -> None:
                 print("ℹ️ networkidle timeout — continuing once DOM is usable.")
             time.sleep(2)
 
-            for i, (phs, study) in enumerate(SCENARIOS):
-                exp_p, exp_s, exp_f = get_expected_counts(i, phs, study, df)
+            for phs, study in SCENARIOS:
+                exp_p, exp_s, exp_f = lookup_expected_counts(df, phs, study)
                 apply_phs_filter(page, phs)
                 select_study(page, study)
 
@@ -479,7 +471,7 @@ def run() -> None:
                 deselect_study(page, study)
                 clear_phs_filter(page, phs)
 
-            generate_html_report(results)
+            generate_html_report(results, page_url=url)
             print(f"\n📄 HTML report written: {REPORT_PATH}")
         finally:
             browser.close()

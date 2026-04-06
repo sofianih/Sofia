@@ -1,13 +1,13 @@
 """
-Self-contained script: Data Commons general-qa2 — PHS + study caNanoLab Data (Samples / Files /
-Protocols), then Cancer Nanotechnology + Protocol Name CPMV-S100A9 Production, then uncheck CPMV
-and filter Protocol Type → Endotoxin (expected Participants 0 / Samples 0 / Files 10 / Protocols 20),
-then uncheck Endotoxin, open DOI and check 10.17917/0165-RC67 (expect 0 / 0 / 1 / 1), then uncheck
-that DOI and select Publication Title → 3D In Vitro Model… (expect 0 / 1 / 5 / 0), then uncheck that
-title and Nanomaterial Entity → aptamer (expect 0 / 4 / 24 / 0), then uncheck aptamer and
-Functionalizing Entity → Antibody (expect 0 / 9 / 60 / 0), then uncheck Antibody and
-Characterization Type → Clinical trial (expect 0 / 8 / 45 / 0), then uncheck clinical trial and
-Characterization Name → Anti-Tumor Efficacy In Vivo (expect 0 / 5 / 25 / 0).
+Self-contained script: Data Commons — PHS + study caNanoLab Data (Samples / Files / Protocols),
+then Cancer Nanotechnology + Protocol Name CPMV-S100A9 Production, then uncheck CPMV and filter
+Protocol Type → Endotoxin, then DOI, Publication Title, Nanomaterial Entity → aptamer,
+Functionalizing Entity → Antibody, Characterization Type → Clinical trial, Characterization Name →
+Anti-Tumor Efficacy In Vivo. Expected counts come from **caNanoLabData_Basecounts.xlsx** next to
+this script unless **CANANOLAB_BASECOUNTS_PATH** points elsewhere.
+
+Set **CANANOLAB_DATA_COMMONS_URL** to override the portal URL (default: general-qa2).
+
 Study Name uses a popover checklist; CN subfacets use in-sidebar accordions. HTML report: nine sections.
 """
 
@@ -18,11 +18,15 @@ from playwright.sync_api import (
     TimeoutError as PlaywrightTimeoutError,
 )
 import html
+import os
 import re
 import sys
 import time
 from dataclasses import dataclass
 from datetime import datetime, timezone
+from pathlib import Path
+
+import pandas as pd
 
 if sys.platform == "win32" and hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -31,14 +35,117 @@ if sys.platform == "win32" and hasattr(sys.stdout, "reconfigure"):
 # -----------------------------------
 # CONFIG
 # -----------------------------------
-URL = "https://general-qa2.datacommons.cancer.gov/#/data"
+_DEFAULT_DATA_COMMONS_URL = "https://general-qa2.datacommons.cancer.gov/#/data"
+
 PHS_ACCESSION = "10.17917"
 STUDY_NAME = "caNanoLab Data"
 
-# Base file expectations: caNanoLab Data (study-level)
-BASE_SAMPLES = 1672
-BASE_FILES = 8392
-BASE_PROTOCOLS = 359
+_SCRIPT_DIR = Path(__file__).resolve().parent
+DEFAULT_BASECOUNTS_WORKBOOK = _SCRIPT_DIR / "caNanoLabData_Basecounts.xlsx"
+
+# Scenario IDs must match the Scenario column in caNanoLabData_Basecounts.xlsx (case-insensitive).
+BC_STUDY = "study"
+BC_CPMV = "cpmv"
+BC_ENDOTOXIN = "endotoxin"
+BC_DOI = "doi"
+BC_PUBLICATION_TITLE = "publication_title"
+BC_NM_APTAMER = "nm_aptamer"
+BC_FE_ANTIBODY = "fe_antibody"
+BC_CLINICAL_TRIAL = "clinical_trial"
+BC_CNAME_ANTITUMOR = "cname_antitumor"
+
+_REQUIRED_BASECOUNT_SCENARIOS: tuple[str, ...] = (
+    BC_STUDY,
+    BC_CPMV,
+    BC_ENDOTOXIN,
+    BC_DOI,
+    BC_PUBLICATION_TITLE,
+    BC_NM_APTAMER,
+    BC_FE_ANTIBODY,
+    BC_CLINICAL_TRIAL,
+    BC_CNAME_ANTITUMOR,
+)
+
+
+def _data_commons_url() -> str:
+    v = os.environ.get("CANANOLAB_DATA_COMMONS_URL", "").strip()
+    return v if v else _DEFAULT_DATA_COMMONS_URL
+
+
+def _norm_basecount_scenario(val: str) -> str:
+    return re.sub(r"\s+", "_", str(val).strip().lower())
+
+
+def _find_df_column(df: pd.DataFrame, *names: str) -> str | None:
+    lower = {str(c).strip().lower(): str(c) for c in df.columns}
+    for n in names:
+        key = n.strip().lower()
+        if key in lower:
+            return lower[key]
+    return None
+
+
+def load_cananolab_basecounts_workbook(xlsx_path: str) -> dict[str, dict[str, int]]:
+    """
+    Load expected P/S/F/Pr counts per scenario from Excel.
+    Required columns: Scenario (or Section), Participants, Samples, Files, Protocols.
+    """
+    path = Path(xlsx_path)
+    if not path.is_file():
+        raise FileNotFoundError(
+            f"Base counts workbook not found: {path}\n"
+            f"Expected **caNanoLabData_Basecounts.xlsx** in {_SCRIPT_DIR}, or set "
+            "env CANANOLAB_BASECOUNTS_PATH."
+        )
+
+    df = pd.read_excel(path, engine="openpyxl")
+    df.columns = df.columns.map(lambda c: str(c).strip())
+
+    scen_col = _find_df_column(df, "scenario", "scenario_id", "section")
+    if not scen_col:
+        raise RuntimeError(
+            "Workbook must have a Scenario column (or Scenario ID / Section)."
+        )
+    p_col = _find_df_column(df, "participants", "participant")
+    s_col = _find_df_column(df, "samples", "sample")
+    f_col = _find_df_column(df, "files", "file")
+    pr_col = _find_df_column(df, "protocols", "protocol")
+    if not all((p_col, s_col, f_col, pr_col)):
+        raise RuntimeError(
+            "Workbook must have Participants, Samples, Files, and Protocols columns."
+        )
+
+    out: dict[str, dict[str, int]] = {}
+    for _, row in df.iterrows():
+        raw = row[scen_col]
+        if pd.isna(raw) or str(raw).strip() == "":
+            continue
+        key = _norm_basecount_scenario(str(raw))
+        if not key or key.startswith("#"):
+            continue
+
+        def _cell(col: str) -> int:
+            v = row[col]
+            if pd.isna(v):
+                raise ValueError(f"Empty cell for scenario {key!r} column {col!r}")
+            return int(float(v))
+
+        out[key] = {
+            "participants": _cell(p_col),
+            "samples": _cell(s_col),
+            "files": _cell(f_col),
+            "protocols": _cell(pr_col),
+        }
+
+    missing = [s for s in _REQUIRED_BASECOUNT_SCENARIOS if s not in out]
+    if missing:
+        raise ValueError(
+            "Workbook is missing required scenario row(s): "
+            f"{', '.join(missing)}. Found: {sorted(out.keys())}."
+        )
+
+    return out
+
 
 # Cancer Nanotechnology + protocol filter scenario
 CANCER_NANO_FACET = "Cancer Nanotechnology"
@@ -71,67 +178,35 @@ PROTOCOL_NAME_FACET = "Protocol Name"
 PROTOCOL_NAME_VALUE = "CPMV-S100A9 Production"
 # Protocol option row (QA2; jss* / numeric MUI suffixes change — use partial MuiTypography-body1):
 #   <p class="MuiTypography-root-23704 jss23685 MuiTypography-body1-23706">CPMV-S100A9 Production</p>
-CPMV_BASE_PARTICIPANTS = 0
-CPMV_BASE_SAMPLES = 1
-CPMV_BASE_FILES = 1
-CPMV_BASE_PROTOCOLS = 1
 
 # After CPMV scenario: uncheck protocol name, filter Protocol Type → Endotoxin (under CN)
 PROTOCOL_TYPE_FACET = "Protocol Type"
 PROTOCOL_TYPE_VALUE = "Endotoxin"
-ENDOTOXIN_BASE_PARTICIPANTS = 0
-ENDOTOXIN_BASE_SAMPLES = 0
-ENDOTOXIN_BASE_FILES = 10
-ENDOTOXIN_BASE_PROTOCOLS = 20
 
 # Scenario 4: uncheck Endotoxin, then DOI → single record (under Cancer Nanotechnology).
 DOI_FACET = "DOI"
 DOI_VALUE = "10.17917/0165-RC67"
-DOI_FILTER_PARTICIPANTS = 0
-DOI_FILTER_SAMPLES = 0
-DOI_FILTER_FILES = 1
-DOI_FILTER_PROTOCOLS = 1
 
 # Scenario 5: uncheck DOI, then Publication Title (under CN).
 PUBLICATION_TITLE_FACET = "Publication Title"
 PUBLICATION_TITLE_VALUE = (
     "3D In Vitro Model (R)evolution: Unveiling Tumor-Stroma Interactions"
 )
-PUB_TITLE_FILTER_PARTICIPANTS = 0
-PUB_TITLE_FILTER_SAMPLES = 1
-PUB_TITLE_FILTER_FILES = 5
-PUB_TITLE_FILTER_PROTOCOLS = 0
 
 # Scenario 6: uncheck Publication Title, open Nanomaterial Entity, check entity type aptamer.
 NANOMATERIAL_ENTITY_TYPE_VALUE = "aptamer"
-NM_APTAMER_PARTICIPANTS = 0
-NM_APTAMER_SAMPLES = 4
-NM_APTAMER_FILES = 24
-NM_APTAMER_PROTOCOLS = 0
 
 # Scenario 7: uncheck aptamer (NM entity), Functionalizing Entity → Antibody.
 FUNCTIONALIZING_ENTITY_FACET = "Functionalizing Entity"
 FUNCTIONALIZING_ENTITY_VALUE = "Antibody"
-FE_ANTIBODY_PARTICIPANTS = 0
-FE_ANTIBODY_SAMPLES = 9
-FE_ANTIBODY_FILES = 60
-FE_ANTIBODY_PROTOCOLS = 0
 
 # Scenario 8: uncheck Antibody (FE), Characterization Type → clinical trial (QA2 list label).
 CHARACTERIZATION_TYPE_FACET = "Characterization Type"
 CHARACTERIZATION_TYPE_VALUE = "Clinical trial"
-CT_CLINICAL_TRIAL_PARTICIPANTS = 0
-CT_CLINICAL_TRIAL_SAMPLES = 8
-CT_CLINICAL_TRIAL_FILES = 45
-CT_CLINICAL_TRIAL_PROTOCOLS = 0
 
 # Scenario 9: uncheck Characterization Type (clinical trial), Characterization Name → Anti-Tumor….
 CHARACTERIZATION_NAME_FACET = "Characterization Name"
 CHARACTERIZATION_NAME_VALUE = "Anti-Tumor Efficacy In Vivo"
-CNAME_ANTITUMOR_PARTICIPANTS = 0
-CNAME_ANTITUMOR_SAMPLES = 5
-CNAME_ANTITUMOR_FILES = 25
-CNAME_ANTITUMOR_PROTOCOLS = 0
 
 REPORT_PATH = "caNanoLab_QA_Report.html"
 
@@ -2035,23 +2110,31 @@ def select_characterization_name_under_cancer_nanotechnology(
 
 
 def run() -> None:
+    wb_path = os.environ.get("CANANOLAB_BASECOUNTS_PATH", "").strip()
+    workbook = Path(wb_path).expanduser() if wb_path else DEFAULT_BASECOUNTS_WORKBOOK
+    print(f"📎 Loading base counts from: {workbook}")
+    bc = load_cananolab_basecounts_workbook(str(workbook))
+
+    url = _data_commons_url()
+    print(f"🌐 Data Commons URL: {url}")
+
     with sync_playwright() as p:
         browser = p.chromium.launch(channel="chrome", headless=False)
         page = browser.new_page()
         try:
-            page.goto(URL, timeout=120_000)
+            page.goto(url, timeout=120_000)
             dismiss_continue_if_present(page)
             page.wait_for_load_state("networkidle")
 
-            print(f"Opened {URL}")
+            print(f"Opened {url}")
             apply_phs_filter(page, PHS_ACCESSION)
             select_study_name(page, STUDY_NAME)
             print("✅ Filters applied: PHS and study name.")
 
             study_checks = [
-                ("Samples", BASE_SAMPLES),
-                ("Files", BASE_FILES),
-                ("Protocols", BASE_PROTOCOLS),
+                ("Samples", bc[BC_STUDY]["samples"]),
+                ("Files", bc[BC_STUDY]["files"]),
+                ("Protocols", bc[BC_STUDY]["protocols"]),
             ]
             study_results = []
             for label, base in study_checks:
@@ -2063,10 +2146,10 @@ def run() -> None:
             )
 
             cpmv_checks = [
-                ("Participants", CPMV_BASE_PARTICIPANTS),
-                ("Samples", CPMV_BASE_SAMPLES),
-                ("Files", CPMV_BASE_FILES),
-                ("Protocols", CPMV_BASE_PROTOCOLS),
+                ("Participants", bc[BC_CPMV]["participants"]),
+                ("Samples", bc[BC_CPMV]["samples"]),
+                ("Files", bc[BC_CPMV]["files"]),
+                ("Protocols", bc[BC_CPMV]["protocols"]),
             ]
             cpmv_results = []
             for label, base in cpmv_checks:
@@ -2079,10 +2162,10 @@ def run() -> None:
             )
 
             endotoxin_checks = [
-                ("Participants", ENDOTOXIN_BASE_PARTICIPANTS),
-                ("Samples", ENDOTOXIN_BASE_SAMPLES),
-                ("Files", ENDOTOXIN_BASE_FILES),
-                ("Protocols", ENDOTOXIN_BASE_PROTOCOLS),
+                ("Participants", bc[BC_ENDOTOXIN]["participants"]),
+                ("Samples", bc[BC_ENDOTOXIN]["samples"]),
+                ("Files", bc[BC_ENDOTOXIN]["files"]),
+                ("Protocols", bc[BC_ENDOTOXIN]["protocols"]),
             ]
             endotoxin_results = []
             for label, base in endotoxin_checks:
@@ -2099,10 +2182,10 @@ def run() -> None:
             )
 
             scenario4_checks = [
-                ("Participants", DOI_FILTER_PARTICIPANTS),
-                ("Samples", DOI_FILTER_SAMPLES),
-                ("Files", DOI_FILTER_FILES),
-                ("Protocols", DOI_FILTER_PROTOCOLS),
+                ("Participants", bc[BC_DOI]["participants"]),
+                ("Samples", bc[BC_DOI]["samples"]),
+                ("Files", bc[BC_DOI]["files"]),
+                ("Protocols", bc[BC_DOI]["protocols"]),
             ]
             scenario4_results = []
             for label, base in scenario4_checks:
@@ -2120,10 +2203,10 @@ def run() -> None:
             )
 
             scenario5_checks = [
-                ("Participants", PUB_TITLE_FILTER_PARTICIPANTS),
-                ("Samples", PUB_TITLE_FILTER_SAMPLES),
-                ("Files", PUB_TITLE_FILTER_FILES),
-                ("Protocols", PUB_TITLE_FILTER_PROTOCOLS),
+                ("Participants", bc[BC_PUBLICATION_TITLE]["participants"]),
+                ("Samples", bc[BC_PUBLICATION_TITLE]["samples"]),
+                ("Files", bc[BC_PUBLICATION_TITLE]["files"]),
+                ("Protocols", bc[BC_PUBLICATION_TITLE]["protocols"]),
             ]
             scenario5_results = []
             for label, base in scenario5_checks:
@@ -2145,10 +2228,10 @@ def run() -> None:
             )
 
             scenario6_checks = [
-                ("Participants", NM_APTAMER_PARTICIPANTS),
-                ("Samples", NM_APTAMER_SAMPLES),
-                ("Files", NM_APTAMER_FILES),
-                ("Protocols", NM_APTAMER_PROTOCOLS),
+                ("Participants", bc[BC_NM_APTAMER]["participants"]),
+                ("Samples", bc[BC_NM_APTAMER]["samples"]),
+                ("Files", bc[BC_NM_APTAMER]["files"]),
+                ("Protocols", bc[BC_NM_APTAMER]["protocols"]),
             ]
             scenario6_results = []
             for label, base in scenario6_checks:
@@ -2171,10 +2254,10 @@ def run() -> None:
             )
 
             scenario7_checks = [
-                ("Participants", FE_ANTIBODY_PARTICIPANTS),
-                ("Samples", FE_ANTIBODY_SAMPLES),
-                ("Files", FE_ANTIBODY_FILES),
-                ("Protocols", FE_ANTIBODY_PROTOCOLS),
+                ("Participants", bc[BC_FE_ANTIBODY]["participants"]),
+                ("Samples", bc[BC_FE_ANTIBODY]["samples"]),
+                ("Files", bc[BC_FE_ANTIBODY]["files"]),
+                ("Protocols", bc[BC_FE_ANTIBODY]["protocols"]),
             ]
             scenario7_results = []
             for label, base in scenario7_checks:
@@ -2197,10 +2280,10 @@ def run() -> None:
             )
 
             scenario8_checks = [
-                ("Participants", CT_CLINICAL_TRIAL_PARTICIPANTS),
-                ("Samples", CT_CLINICAL_TRIAL_SAMPLES),
-                ("Files", CT_CLINICAL_TRIAL_FILES),
-                ("Protocols", CT_CLINICAL_TRIAL_PROTOCOLS),
+                ("Participants", bc[BC_CLINICAL_TRIAL]["participants"]),
+                ("Samples", bc[BC_CLINICAL_TRIAL]["samples"]),
+                ("Files", bc[BC_CLINICAL_TRIAL]["files"]),
+                ("Protocols", bc[BC_CLINICAL_TRIAL]["protocols"]),
             ]
             scenario8_results = []
             for label, base in scenario8_checks:
@@ -2223,10 +2306,10 @@ def run() -> None:
             )
 
             scenario9_checks = [
-                ("Participants", CNAME_ANTITUMOR_PARTICIPANTS),
-                ("Samples", CNAME_ANTITUMOR_SAMPLES),
-                ("Files", CNAME_ANTITUMOR_FILES),
-                ("Protocols", CNAME_ANTITUMOR_PROTOCOLS),
+                ("Participants", bc[BC_CNAME_ANTITUMOR]["participants"]),
+                ("Samples", bc[BC_CNAME_ANTITUMOR]["samples"]),
+                ("Files", bc[BC_CNAME_ANTITUMOR]["files"]),
+                ("Protocols", bc[BC_CNAME_ANTITUMOR]["protocols"]),
             ]
             scenario9_results = []
             for label, base in scenario9_checks:
@@ -2291,7 +2374,7 @@ def run() -> None:
             generate_html_report(
                 report_sections,
                 all_ok,
-                url=URL,
+                url=url,
                 phs=PHS_ACCESSION,
                 study_name=STUDY_NAME,
                 scenario2_summary=f"{CANCER_NANO_FACET} + {PROTOCOL_NAME_VALUE}",
@@ -2302,33 +2385,53 @@ def run() -> None:
                 scenario4_summary=(
                     f"Uncheck {PROTOCOL_TYPE_VALUE}; {DOI_FACET} → {DOI_VALUE}; "
                     f"expect Participants / Samples / Files / Protocols = "
-                    f"{DOI_FILTER_PARTICIPANTS} / {DOI_FILTER_SAMPLES} / "
-                    f"{DOI_FILTER_FILES} / {DOI_FILTER_PROTOCOLS}"
+                    f"{bc[BC_DOI]['participants']} / {bc[BC_DOI]['samples']} / "
+                    f"{bc[BC_DOI]['files']} / {bc[BC_DOI]['protocols']}"
                 ),
                 scenario5_summary=(
                     f"Uncheck {DOI_VALUE}; {PUBLICATION_TITLE_FACET} → "
-                    f"{PUBLICATION_TITLE_VALUE}; expect 0 / 1 / 5 / 0 "
+                    f"{PUBLICATION_TITLE_VALUE}; expect "
+                    f"{bc[BC_PUBLICATION_TITLE]['participants']} / "
+                    f"{bc[BC_PUBLICATION_TITLE]['samples']} / "
+                    f"{bc[BC_PUBLICATION_TITLE]['files']} / "
+                    f"{bc[BC_PUBLICATION_TITLE]['protocols']} "
                     f"(Participants / Samples / Files / Protocols)"
                 ),
                 scenario6_summary=(
                     f"Uncheck publication title; {NANOMATERIAL_ENTITY_DIV_ID} → "
-                    f"{NANOMATERIAL_ENTITY_TYPE_VALUE}; expect 0 / 4 / 24 / 0 "
+                    f"{NANOMATERIAL_ENTITY_TYPE_VALUE}; expect "
+                    f"{bc[BC_NM_APTAMER]['participants']} / "
+                    f"{bc[BC_NM_APTAMER]['samples']} / "
+                    f"{bc[BC_NM_APTAMER]['files']} / "
+                    f"{bc[BC_NM_APTAMER]['protocols']} "
                     f"(Participants / Samples / Files / Protocols)"
                 ),
                 scenario7_summary=(
                     f"Uncheck {NANOMATERIAL_ENTITY_TYPE_VALUE}; "
                     f"{FUNCTIONALIZING_ENTITY_FACET} → {FUNCTIONALIZING_ENTITY_VALUE}; "
-                    f"expect 0 / 9 / 60 / 0 (Participants / Samples / Files / Protocols)"
+                    f"expect {bc[BC_FE_ANTIBODY]['participants']} / "
+                    f"{bc[BC_FE_ANTIBODY]['samples']} / "
+                    f"{bc[BC_FE_ANTIBODY]['files']} / "
+                    f"{bc[BC_FE_ANTIBODY]['protocols']} "
+                    f"(Participants / Samples / Files / Protocols)"
                 ),
                 scenario8_summary=(
                     f"Uncheck {FUNCTIONALIZING_ENTITY_VALUE}; "
                     f"{CHARACTERIZATION_TYPE_FACET} → clinical trial "
                     f"({CHARACTERIZATION_TYPE_VALUE!r} in UI); "
-                    f"expect 0 / 8 / 45 / 0 (Participants / Samples / Files / Protocols)"
+                    f"expect {bc[BC_CLINICAL_TRIAL]['participants']} / "
+                    f"{bc[BC_CLINICAL_TRIAL]['samples']} / "
+                    f"{bc[BC_CLINICAL_TRIAL]['files']} / "
+                    f"{bc[BC_CLINICAL_TRIAL]['protocols']} "
+                    f"(Participants / Samples / Files / Protocols)"
                 ),
                 scenario9_summary=(
                     f"Uncheck clinical trial; {CHARACTERIZATION_NAME_FACET} → "
-                    f"{CHARACTERIZATION_NAME_VALUE}; expect 0 / 5 / 25 / 0 "
+                    f"{CHARACTERIZATION_NAME_VALUE}; expect "
+                    f"{bc[BC_CNAME_ANTITUMOR]['participants']} / "
+                    f"{bc[BC_CNAME_ANTITUMOR]['samples']} / "
+                    f"{bc[BC_CNAME_ANTITUMOR]['files']} / "
+                    f"{bc[BC_CNAME_ANTITUMOR]['protocols']} "
                     f"(Participants / Samples / Files / Protocols)"
                 ),
             )
