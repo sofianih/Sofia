@@ -151,7 +151,6 @@ def report_html(statbar, studies, meta):
 <p>Source: <a href="{html.escape(URL)}">{html.escape(URL)}</a> · Baseline: <code>{html.escape(Path(meta['excel']).name)}</code> ·
 {html.escape(meta['collected_at'])} · {'headed' if not meta['headless'] else 'headless'}</p>
 <div class=bar>{cards}</div>
-<p>Primary totals from page statbar (<code>#statsbar_title_*</code>), not table sums.</p>
 <div class=sec><span>PASS: <b class=ok>{passes}</b></span><span>FAIL/gaps: <b class=bad>{len(studies)-passes}</b></span>
 <span>Table sum · Participants: {fmt(tpart)} (secondary)</span><span>Table sum · Files: {fmt(tfiles)} (secondary)</span></div>
 <table><thead><tr><th>#</th><th>Study</th><th>Name</th><th class=n>UI Part.</th><th class=n>Excel Part.</th>
