@@ -1,14 +1,24 @@
 {
   "meta": {
     "source_url": "https://general.datacommons.cancer.gov/#/studies",
-    "collected_at": "2026-10-27 13:44 UTC",
+    "collected_at": "2026-10-27 14:21 UTC",
     "browser": "Chromium (Playwright)",
+    "headless": false,
     "listing_count": 61,
     "studies_collected": 61,
     "detail_ok_count": 61,
     "failures": [],
-    "duration_sec": 409.4,
-    "method": "playwright-ui"
+    "duration_sec": 410.5,
+    "method": "playwright-ui-vs-excel",
+    "comparison": {
+      "baseline_path": "/workspace/gc-studies-playwright/data/GC_Studypage_Basecount.xlsx",
+      "baseline_studies": 61,
+      "ui_studies": 61,
+      "pass": 61,
+      "fail": 0,
+      "missing_in_base": 0,
+      "missing_in_ui": 0
+    }
   },
   "studies": [
     {
@@ -27,7 +37,13 @@
       "listing_participants": 0,
       "listing_files": 8392,
       "detail_participants": 0,
-      "detail_files": 8392
+      "detail_files": 8392,
+      "excel_participants": 0,
+      "excel_files": 8392,
+      "participants_match": true,
+      "files_match": true,
+      "compare_status": "PASS",
+      "mismatch_detail": ""
     },
     {
       "phs": "phs000720",
@@ -45,7 +61,13 @@
       "listing_participants": 403,
       "listing_files": 680,
       "detail_participants": 403,
-      "detail_files": 680
+      "detail_files": 680,
+      "excel_participants": 403,
+      "excel_files": 680,
+      "participants_match": true,
+      "files_match": true,
+      "compare_status": "PASS",
+      "mismatch_detail": ""
     },
     {
       "phs": "phs001228",
@@ -63,7 +85,13 @@
       "listing_participants": 1287,
       "listing_files": 49518,
       "detail_participants": 1287,
-      "detail_files": 49518
+      "detail_files": 49518,
+      "excel_participants": 1287,
+      "excel_files": 49518,
+      "participants_match": true,
+      "files_match": true,
+      "compare_status": "PASS",
+      "mismatch_detail": ""
     },
     {
       "phs": "phs001287",
@@ -81,7 +109,13 @@
       "listing_participants": 1112,
       "listing_files": 2499,
       "detail_participants": 1112,
-      "detail_files": 2499
+      "detail_files": 2499,
+      "excel_participants": 1112,
+      "excel_files": 2499,
+      "participants_match": true,
+      "files_match": true,
+      "compare_status": "PASS",
+      "mismatch_detail": ""
     },
     {
       "phs": "phs001437",
@@ -99,7 +133,13 @@
       "listing_participants": 266,
       "listing_files": 6688,
       "detail_participants": 266,
-      "detail_files": 6688
+      "detail_files": 6688,
+      "excel_participants": 266,
+      "excel_files": 6688,
+      "participants_match": true,
+      "files_match": true,
+      "compare_status": "PASS",
+      "mismatch_detail": ""
     },
     {
       "phs": "phs001524",
@@ -117,7 +157,13 @@
       "listing_participants": 21784,
       "listing_files": 43736,
       "detail_participants": 21784,
-      "detail_files": 43736
+      "detail_files": 43736,
+      "excel_participants": 21784,
+      "excel_files": 43736,
+      "participants_match": true,
+      "files_match": true,
+      "compare_status": "PASS",
+      "mismatch_detail": ""
     },
     {
       "phs": "phs001554",
@@ -135,7 +181,13 @@
       "listing_participants": 2892,
       "listing_files": 5784,
       "detail_participants": 2892,
-      "detail_files": 5784
+      "detail_files": 5784,
+      "excel_participants": 2892,
+      "excel_files": 5784,
+      "participants_match": true,
+      "files_match": true,
+      "compare_status": "PASS",
+      "mismatch_detail": ""
     },
     {
       "phs": "phs001687",
@@ -153,7 +205,13 @@
       "listing_participants": 196,
       "listing_files": 1168,
       "detail_participants": 196,
-      "detail_files": 1168
+      "detail_files": 1168,
+      "excel_participants": 196,
+      "excel_files": 1168,
+      "participants_match": true,
+      "files_match": true,
+      "compare_status": "PASS",
+      "mismatch_detail": ""
     },
     {
       "phs": "phs001713",
@@ -171,7 +229,13 @@
       "listing_participants": 2074,
       "listing_files": 11230,
       "detail_participants": 2074,
-      "detail_files": 11230
+      "detail_files": 11230,
+      "excel_participants": 2074,
+      "excel_files": 11230,
+      "participants_match": true,
+      "files_match": true,
+      "compare_status": "PASS",
+      "mismatch_detail": ""
     },
     {
       "phs": "phs001714",
@@ -189,7 +253,13 @@
       "listing_participants": 84,
       "listing_files": 12727,
       "detail_participants": 84,
-      "detail_files": 12727
+      "detail_files": 12727,
+      "excel_participants": 84,
+      "excel_files": 12727,
+      "participants_match": true,
+      "files_match": true,
+      "compare_status": "PASS",
+      "mismatch_detail": ""
     },
     {
       "phs": "phs001738",
@@ -207,7 +277,13 @@
       "listing_participants": 185,
       "listing_files": 4728,
       "detail_participants": 185,
-      "detail_files": 4728
+      "detail_files": 4728,
+      "excel_participants": 185,
+      "excel_files": 4728,
+      "participants_match": true,
+      "files_match": true,
+      "compare_status": "PASS",
+      "mismatch_detail": ""
     },
     {
       "phs": "phs001787",
@@ -225,7 +301,13 @@
       "listing_participants": 51,
       "listing_files": 318,
       "detail_participants": 51,
-      "detail_files": 318
+      "detail_files": 318,
+      "excel_participants": 51,
+      "excel_files": 318,
+      "participants_match": true,
+      "files_match": true,
+      "compare_status": "PASS",
+      "mismatch_detail": ""
     },
     {
       "phs": "phs001819",
@@ -243,7 +325,13 @@
       "listing_participants": 39,
       "listing_files": 39,
       "detail_participants": 39,
-      "detail_files": 39
+      "detail_files": 39,
+      "excel_participants": 39,
+      "excel_files": 39,
+      "participants_match": true,
+      "files_match": true,
+      "compare_status": "PASS",
+      "mismatch_detail": ""
     },
     {
       "phs": "phs001846",
@@ -261,7 +349,13 @@
       "listing_participants": 1776,
       "listing_files": 26788,
       "detail_participants": 1776,
-      "detail_files": 26788
+      "detail_files": 26788,
+      "excel_participants": 1776,
+      "excel_files": 26788,
+      "participants_match": true,
+      "files_match": true,
+      "compare_status": "PASS",
+      "mismatch_detail": ""
     },
     {
       "phs": "phs001878",
@@ -279,7 +373,13 @@
       "listing_participants": 611,
       "listing_files": 7353,
       "detail_participants": 611,
-      "detail_files": 7353
+      "detail_files": 7353,
+      "excel_participants": 611,
+      "excel_files": 7353,
+      "participants_match": true,
+      "files_match": true,
+      "compare_status": "PASS",
+      "mismatch_detail": ""
     },
     {
       "phs": "phs001905",
@@ -297,7 +397,13 @@
       "listing_participants": 4341,
       "listing_files": 16832,
       "detail_participants": 4341,
-      "detail_files": 16832
+      "detail_files": 16832,
+      "excel_participants": 4341,
+      "excel_files": 16832,
+      "participants_match": true,
+      "files_match": true,
+      "compare_status": "PASS",
+      "mismatch_detail": ""
     },
     {
       "phs": "phs001980",
@@ -315,7 +421,13 @@
       "listing_participants": 36,
       "listing_files": 98,
       "detail_participants": 36,
-      "detail_files": 98
+      "detail_files": 98,
+      "excel_participants": 36,
+      "excel_files": 98,
+      "participants_match": true,
+      "files_match": true,
+      "compare_status": "PASS",
+      "mismatch_detail": ""
     },
     {
       "phs": "phs002050",
@@ -333,7 +445,13 @@
       "listing_participants": 2528,
       "listing_files": 5056,
       "detail_participants": 2528,
-      "detail_files": 5056
+      "detail_files": 5056,
+      "excel_participants": 2528,
+      "excel_files": 5056,
+      "participants_match": true,
+      "files_match": true,
+      "compare_status": "PASS",
+      "mismatch_detail": ""
     },
     {
       "phs": "phs002187",
@@ -351,7 +469,13 @@
       "listing_participants": 60,
       "listing_files": 3342,
       "detail_participants": 60,
-      "detail_files": 3342
+      "detail_files": 3342,
+      "excel_participants": 60,
+      "excel_files": 3342,
+      "participants_match": true,
+      "files_match": true,
+      "compare_status": "PASS",
+      "mismatch_detail": ""
     },
     {
       "phs": "phs002250",
@@ -369,7 +493,13 @@
       "listing_participants": 146,
       "listing_files": 292,
       "detail_participants": 146,
-      "detail_files": 292
+      "detail_files": 292,
+      "excel_participants": 146,
+      "excel_files": 292,
+      "participants_match": true,
+      "files_match": true,
+      "compare_status": "PASS",
+      "mismatch_detail": ""
     },
     {
       "phs": "phs002293",
@@ -387,7 +517,13 @@
       "listing_participants": 182,
       "listing_files": 1807,
       "detail_participants": 182,
-      "detail_files": 1807
+      "detail_files": 1807,
+      "excel_participants": 182,
+      "excel_files": 1807,
+      "participants_match": true,
+      "files_match": true,
+      "compare_status": "PASS",
+      "mismatch_detail": ""
     },
     {
       "phs": "phs002305",
@@ -405,7 +541,13 @@
       "listing_participants": 127,
       "listing_files": 990,
       "detail_participants": 127,
-      "detail_files": 990
+      "detail_files": 990,
+      "excel_participants": 127,
+      "excel_files": 990,
+      "participants_match": true,
+      "files_match": true,
+      "compare_status": "PASS",
+      "mismatch_detail": ""
     },
     {
       "phs": "phs002322",
@@ -423,7 +565,13 @@
       "listing_participants": 356,
       "listing_files": 10667,
       "detail_participants": 356,
-      "detail_files": 10667
+      "detail_files": 10667,
+      "excel_participants": 356,
+      "excel_files": 10667,
+      "participants_match": true,
+      "files_match": true,
+      "compare_status": "PASS",
+      "mismatch_detail": ""
     },
     {
       "phs": "phs002366",
@@ -441,7 +589,13 @@
       "listing_participants": 1195,
       "listing_files": 2390,
       "detail_participants": 1195,
-      "detail_files": 2390
+      "detail_files": 2390,
+      "excel_participants": 1195,
+      "excel_files": 2390,
+      "participants_match": true,
+      "files_match": true,
+      "compare_status": "PASS",
+      "mismatch_detail": ""
     },
     {
       "phs": "phs002371",
@@ -459,7 +613,13 @@
       "listing_participants": 1894,
       "listing_files": 49449,
       "detail_participants": 1894,
-      "detail_files": 49449
+      "detail_files": 49449,
+      "excel_participants": 1894,
+      "excel_files": 49449,
+      "participants_match": true,
+      "files_match": true,
+      "compare_status": "PASS",
+      "mismatch_detail": ""
     },
     {
       "phs": "phs002371_image",
@@ -477,7 +637,13 @@
       "listing_participants": 1538,
       "listing_files": 27886,
       "detail_participants": 1538,
-      "detail_files": 27886
+      "detail_files": 27886,
+      "excel_participants": 1538,
+      "excel_files": 27886,
+      "participants_match": true,
+      "files_match": true,
+      "compare_status": "PASS",
+      "mismatch_detail": ""
     },
     {
       "phs": "phs002430",
@@ -495,7 +661,13 @@
       "listing_participants": 239,
       "listing_files": 2864,
       "detail_participants": 239,
-      "detail_files": 2864
+      "detail_files": 2864,
+      "excel_participants": 239,
+      "excel_files": 2864,
+      "participants_match": true,
+      "files_match": true,
+      "compare_status": "PASS",
+      "mismatch_detail": ""
     },
     {
       "phs": "phs002431",
@@ -513,7 +685,13 @@
       "listing_participants": 612,
       "listing_files": 13841,
       "detail_participants": 612,
-      "detail_files": 13841
+      "detail_files": 13841,
+      "excel_participants": 612,
+      "excel_files": 13841,
+      "participants_match": true,
+      "files_match": true,
+      "compare_status": "PASS",
+      "mismatch_detail": ""
     },
     {
       "phs": "phs002432",
@@ -531,7 +709,13 @@
       "listing_participants": 46,
       "listing_files": 370,
       "detail_participants": 46,
-      "detail_files": 370
+      "detail_files": 370,
+      "excel_participants": 46,
+      "excel_files": 370,
+      "participants_match": true,
+      "files_match": true,
+      "compare_status": "PASS",
+      "mismatch_detail": ""
     },
     {
       "phs": "phs002479",
@@ -549,7 +733,13 @@
       "listing_participants": 37,
       "listing_files": 279,
       "detail_participants": 37,
-      "detail_files": 279
+      "detail_files": 279,
+      "excel_participants": 37,
+      "excel_files": 279,
+      "participants_match": true,
+      "files_match": true,
+      "compare_status": "PASS",
+      "mismatch_detail": ""
     },
     {
       "phs": "phs002504",
@@ -567,7 +757,13 @@
       "listing_participants": 222,
       "listing_files": 2213,
       "detail_participants": 222,
-      "detail_files": 2213
+      "detail_files": 2213,
+      "excel_participants": 222,
+      "excel_files": 2213,
+      "participants_match": true,
+      "files_match": true,
+      "compare_status": "PASS",
+      "mismatch_detail": ""
     },
     {
       "phs": "phs002517",
@@ -585,7 +781,13 @@
       "listing_participants": 1226,
       "listing_files": 64701,
       "detail_participants": 1226,
-      "detail_files": 64701
+      "detail_files": 64701,
+      "excel_participants": 1226,
+      "excel_files": 64701,
+      "participants_match": true,
+      "files_match": true,
+      "compare_status": "PASS",
+      "mismatch_detail": ""
     },
     {
       "phs": "phs002518",
@@ -603,7 +805,13 @@
       "listing_participants": 1039,
       "listing_files": 2246,
       "detail_participants": 1039,
-      "detail_files": 2246
+      "detail_files": 2246,
+      "excel_participants": 1039,
+      "excel_files": 2246,
+      "participants_match": true,
+      "files_match": true,
+      "compare_status": "PASS",
+      "mismatch_detail": ""
     },
     {
       "phs": "phs002529",
@@ -621,7 +829,13 @@
       "listing_participants": 193,
       "listing_files": 5375,
       "detail_participants": 193,
-      "detail_files": 5375
+      "detail_files": 5375,
+      "excel_participants": 193,
+      "excel_files": 5375,
+      "participants_match": true,
+      "files_match": true,
+      "compare_status": "PASS",
+      "mismatch_detail": ""
     },
     {
       "phs": "phs002599",
@@ -639,7 +853,13 @@
       "listing_participants": 104,
       "listing_files": 313,
       "detail_participants": 104,
-      "detail_files": 313
+      "detail_files": 313,
+      "excel_participants": 104,
+      "excel_files": 313,
+      "participants_match": true,
+      "files_match": true,
+      "compare_status": "PASS",
+      "mismatch_detail": ""
     },
     {
       "phs": "phs002620",
@@ -657,7 +877,13 @@
       "listing_participants": 113,
       "listing_files": 652,
       "detail_participants": 113,
-      "detail_files": 652
+      "detail_files": 652,
+      "excel_participants": 113,
+      "excel_files": 652,
+      "participants_match": true,
+      "files_match": true,
+      "compare_status": "PASS",
+      "mismatch_detail": ""
     },
     {
       "phs": "phs002637",
@@ -675,7 +901,13 @@
       "listing_participants": 12171,
       "listing_files": 24342,
       "detail_participants": 12171,
-      "detail_files": 24342
+      "detail_files": 24342,
+      "excel_participants": 12171,
+      "excel_files": 24342,
+      "participants_match": true,
+      "files_match": true,
+      "compare_status": "PASS",
+      "mismatch_detail": ""
     },
     {
       "phs": "phs002677",
@@ -693,7 +925,13 @@
       "listing_participants": 836,
       "listing_files": 3,
       "detail_participants": 836,
-      "detail_files": 3
+      "detail_files": 3,
+      "excel_participants": 836,
+      "excel_files": 3,
+      "participants_match": true,
+      "files_match": true,
+      "compare_status": "PASS",
+      "mismatch_detail": ""
     },
     {
       "phs": "phs002790",
@@ -711,7 +949,13 @@
       "listing_participants": 3707,
       "listing_files": 100072,
       "detail_participants": 3707,
-      "detail_files": 100072
+      "detail_files": 100072,
+      "excel_participants": 3707,
+      "excel_files": 100072,
+      "participants_match": true,
+      "files_match": true,
+      "compare_status": "PASS",
+      "mismatch_detail": ""
     },
     {
       "phs": "phs003089",
@@ -729,7 +973,13 @@
       "listing_participants": 735,
       "listing_files": 883,
       "detail_participants": 735,
-      "detail_files": 883
+      "detail_files": 883,
+      "excel_participants": 735,
+      "excel_files": 883,
+      "participants_match": true,
+      "files_match": true,
+      "compare_status": "PASS",
+      "mismatch_detail": ""
     },
     {
       "phs": "phs003111",
@@ -747,7 +997,13 @@
       "listing_participants": 129,
       "listing_files": 2170,
       "detail_participants": 129,
-      "detail_files": 2170
+      "detail_files": 2170,
+      "excel_participants": 129,
+      "excel_files": 2170,
+      "participants_match": true,
+      "files_match": true,
+      "compare_status": "PASS",
+      "mismatch_detail": ""
     },
     {
       "phs": "phs003155",
@@ -765,7 +1021,13 @@
       "listing_participants": 1342,
       "listing_files": 1342,
       "detail_participants": 1342,
-      "detail_files": 1342
+      "detail_files": 1342,
+      "excel_participants": 1342,
+      "excel_files": 1342,
+      "participants_match": true,
+      "files_match": true,
+      "compare_status": "PASS",
+      "mismatch_detail": ""
     },
     {
       "phs": "phs003160",
@@ -783,7 +1045,13 @@
       "listing_participants": 53,
       "listing_files": 4441,
       "detail_participants": 53,
-      "detail_files": 4441
+      "detail_files": 4441,
+      "excel_participants": 53,
+      "excel_files": 4441,
+      "participants_match": true,
+      "files_match": true,
+      "compare_status": "PASS",
+      "mismatch_detail": ""
     },
     {
       "phs": "phs003163",
@@ -801,7 +1069,13 @@
       "listing_participants": 36,
       "listing_files": 2997,
       "detail_participants": 36,
-      "detail_files": 2997
+      "detail_files": 2997,
+      "excel_participants": 36,
+      "excel_files": 2997,
+      "participants_match": true,
+      "files_match": true,
+      "compare_status": "PASS",
+      "mismatch_detail": ""
     },
     {
       "phs": "phs003164",
@@ -819,7 +1093,13 @@
       "listing_participants": 40,
       "listing_files": 3418,
       "detail_participants": 40,
-      "detail_files": 3418
+      "detail_files": 3418,
+      "excel_participants": 40,
+      "excel_files": 3418,
+      "participants_match": true,
+      "files_match": true,
+      "compare_status": "PASS",
+      "mismatch_detail": ""
     },
     {
       "phs": "phs003215",
@@ -837,7 +1117,13 @@
       "listing_participants": 51,
       "listing_files": 620,
       "detail_participants": 51,
-      "detail_files": 620
+      "detail_files": 620,
+      "excel_participants": 51,
+      "excel_files": 620,
+      "participants_match": true,
+      "files_match": true,
+      "compare_status": "PASS",
+      "mismatch_detail": ""
     },
     {
       "phs": "phs003432",
@@ -855,7 +1141,13 @@
       "listing_participants": 43,
       "listing_files": 1421,
       "detail_participants": 43,
-      "detail_files": 1421
+      "detail_files": 1421,
+      "excel_participants": 43,
+      "excel_files": 1421,
+      "participants_match": true,
+      "files_match": true,
+      "compare_status": "PASS",
+      "mismatch_detail": ""
     },
     {
       "phs": "phs003519",
@@ -873,7 +1165,13 @@
       "listing_participants": 29,
       "listing_files": 3644,
       "detail_participants": 29,
-      "detail_files": 3644
+      "detail_files": 3644,
+      "excel_participants": 29,
+      "excel_files": 3644,
+      "participants_match": true,
+      "files_match": true,
+      "compare_status": "PASS",
+      "mismatch_detail": ""
     },
     {
       "phs": "phs003975",
@@ -891,7 +1189,13 @@
       "listing_participants": 8,
       "listing_files": 244,
       "detail_participants": 8,
-      "detail_files": 244
+      "detail_files": 244,
+      "excel_participants": 8,
+      "excel_files": 244,
+      "participants_match": true,
+      "files_match": true,
+      "compare_status": "PASS",
+      "mismatch_detail": ""
     },
     {
       "phs": "phs004065",
@@ -909,7 +1213,13 @@
       "listing_participants": 1234,
       "listing_files": 11,
       "detail_participants": 1234,
-      "detail_files": 11
+      "detail_files": 11,
+      "excel_participants": 1234,
+      "excel_files": 11,
+      "participants_match": true,
+      "files_match": true,
+      "compare_status": "PASS",
+      "mismatch_detail": ""
     },
     {
       "phs": "phs004207",
@@ -927,7 +1237,13 @@
       "listing_participants": 3630,
       "listing_files": 9,
       "detail_participants": 3630,
-      "detail_files": 9
+      "detail_files": 9,
+      "excel_participants": 3630,
+      "excel_files": 9,
+      "participants_match": true,
+      "files_match": true,
+      "compare_status": "PASS",
+      "mismatch_detail": ""
     },
     {
       "phs": "phs004208",
@@ -945,7 +1261,13 @@
       "listing_participants": 3185,
       "listing_files": 10,
       "detail_participants": 3185,
-      "detail_files": 10
+      "detail_files": 10,
+      "excel_participants": 3185,
+      "excel_files": 10,
+      "participants_match": true,
+      "files_match": true,
+      "compare_status": "PASS",
+      "mismatch_detail": ""
     },
     {
       "phs": "phs004209",
@@ -963,7 +1285,13 @@
       "listing_participants": 3677,
       "listing_files": 10,
       "detail_participants": 3677,
-      "detail_files": 10
+      "detail_files": 10,
+      "excel_participants": 3677,
+      "excel_files": 10,
+      "participants_match": true,
+      "files_match": true,
+      "compare_status": "PASS",
+      "mismatch_detail": ""
     },
     {
       "phs": "phs004210",
@@ -981,7 +1309,13 @@
       "listing_participants": 3285,
       "listing_files": 12,
       "detail_participants": 3285,
-      "detail_files": 12
+      "detail_files": 12,
+      "excel_participants": 3285,
+      "excel_files": 12,
+      "participants_match": true,
+      "files_match": true,
+      "compare_status": "PASS",
+      "mismatch_detail": ""
     },
     {
       "phs": "phs004212",
@@ -999,7 +1333,13 @@
       "listing_participants": 3959,
       "listing_files": 7,
       "detail_participants": 3959,
-      "detail_files": 7
+      "detail_files": 7,
+      "excel_participants": 3959,
+      "excel_files": 7,
+      "participants_match": true,
+      "files_match": true,
+      "compare_status": "PASS",
+      "mismatch_detail": ""
     },
     {
       "phs": "phs004213",
@@ -1017,7 +1357,13 @@
       "listing_participants": 7278,
       "listing_files": 11,
       "detail_participants": 7278,
-      "detail_files": 11
+      "detail_files": 11,
+      "excel_participants": 7278,
+      "excel_files": 11,
+      "participants_match": true,
+      "files_match": true,
+      "compare_status": "PASS",
+      "mismatch_detail": ""
     },
     {
       "phs": "phs004214",
@@ -1035,7 +1381,13 @@
       "listing_participants": 6252,
       "listing_files": 11,
       "detail_participants": 6252,
-      "detail_files": 11
+      "detail_files": 11,
+      "excel_participants": 6252,
+      "excel_files": 11,
+      "participants_match": true,
+      "files_match": true,
+      "compare_status": "PASS",
+      "mismatch_detail": ""
     },
     {
       "phs": "phs004215",
@@ -1053,7 +1405,13 @@
       "listing_participants": 3865,
       "listing_files": 11,
       "detail_participants": 3865,
-      "detail_files": 11
+      "detail_files": 11,
+      "excel_participants": 3865,
+      "excel_files": 11,
+      "participants_match": true,
+      "files_match": true,
+      "compare_status": "PASS",
+      "mismatch_detail": ""
     },
     {
       "phs": "phs004216",
@@ -1071,7 +1429,13 @@
       "listing_participants": 5438,
       "listing_files": 13,
       "detail_participants": 5438,
-      "detail_files": 13
+      "detail_files": 13,
+      "excel_participants": 5438,
+      "excel_files": 13,
+      "participants_match": true,
+      "files_match": true,
+      "compare_status": "PASS",
+      "mismatch_detail": ""
     },
     {
       "phs": "phs004217",
@@ -1089,7 +1453,13 @@
       "listing_participants": 3504,
       "listing_files": 12,
       "detail_participants": 3504,
-      "detail_files": 12
+      "detail_files": 12,
+      "excel_participants": 3504,
+      "excel_files": 12,
+      "participants_match": true,
+      "files_match": true,
+      "compare_status": "PASS",
+      "mismatch_detail": ""
     },
     {
       "phs": "phs004225",
@@ -1107,7 +1477,13 @@
       "listing_participants": 123,
       "listing_files": 7629,
       "detail_participants": 123,
-      "detail_files": 7629
+      "detail_files": 7629,
+      "excel_participants": 123,
+      "excel_files": 7629,
+      "participants_match": true,
+      "files_match": true,
+      "compare_status": "PASS",
+      "mismatch_detail": ""
     }
   ]
 }
