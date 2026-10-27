@@ -1,6 +1,6 @@
 {
   "meta": {
-    "collected_at": "2026-10-27 21:28 UTC",
+    "collected_at": "2026-10-27 21:45 UTC",
     "headless": true,
     "url": "https://general.datacommons.cancer.gov/#/studies",
     "row_count": 61,
@@ -69,8 +69,8 @@
     "active": true,
     "direction": "asc",
     "thDirectionAttr": "asc",
-    "labelClass": "MuiButtonBase-root-2363 MuiTableSortLabel-root-2358 MuiTableSortLabel-active-2359",
-    "iconClass": "MuiSvgIcon-root-2364 MuiTableSortLabel-icon-2360 MuiTableSortLabel-iconDirectionAsc-2362"
+    "labelClass": "MuiButtonBase-root-1692 MuiTableSortLabel-root-1687 MuiTableSortLabel-active-1688",
+    "iconClass": "MuiSvgIcon-root-1693 MuiTableSortLabel-icon-1689 MuiTableSortLabel-iconDirectionAsc-1691"
   },
   "columns": [
     {
@@ -82,7 +82,7 @@
       "active": false,
       "direction": null,
       "thDirectionAttr": "asc",
-      "labelClass": "MuiButtonBase-root-2363 MuiTableSortLabel-root-2358",
+      "labelClass": "MuiButtonBase-root-1692 MuiTableSortLabel-root-1687",
       "iconClass": ""
     },
     {
@@ -94,7 +94,7 @@
       "active": false,
       "direction": null,
       "thDirectionAttr": "asc",
-      "labelClass": "MuiButtonBase-root-2363 MuiTableSortLabel-root-2358",
+      "labelClass": "MuiButtonBase-root-1692 MuiTableSortLabel-root-1687",
       "iconClass": ""
     },
     {
@@ -106,8 +106,8 @@
       "active": true,
       "direction": "asc",
       "thDirectionAttr": "asc",
-      "labelClass": "MuiButtonBase-root-2363 MuiTableSortLabel-root-2358 MuiTableSortLabel-active-2359",
-      "iconClass": "MuiSvgIcon-root-2364 MuiTableSortLabel-icon-2360 MuiTableSortLabel-iconDirectionAsc-2362"
+      "labelClass": "MuiButtonBase-root-1692 MuiTableSortLabel-root-1687 MuiTableSortLabel-active-1688",
+      "iconClass": "MuiSvgIcon-root-1693 MuiTableSortLabel-icon-1689 MuiTableSortLabel-iconDirectionAsc-1691"
     },
     {
       "index": 3,
@@ -118,7 +118,7 @@
       "active": false,
       "direction": null,
       "thDirectionAttr": "asc",
-      "labelClass": "MuiButtonBase-root-2363 MuiTableSortLabel-root-2358",
+      "labelClass": "MuiButtonBase-root-1692 MuiTableSortLabel-root-1687",
       "iconClass": ""
     },
     {
@@ -130,7 +130,7 @@
       "active": false,
       "direction": null,
       "thDirectionAttr": "asc",
-      "labelClass": "MuiButtonBase-root-2363 MuiTableSortLabel-root-2358",
+      "labelClass": "MuiButtonBase-root-1692 MuiTableSortLabel-root-1687",
       "iconClass": ""
     },
     {
@@ -142,7 +142,7 @@
       "active": false,
       "direction": null,
       "thDirectionAttr": "asc",
-      "labelClass": "MuiButtonBase-root-2363 MuiTableSortLabel-root-2358",
+      "labelClass": "MuiButtonBase-root-1692 MuiTableSortLabel-root-1687",
       "iconClass": ""
     },
     {
@@ -154,7 +154,7 @@
       "active": false,
       "direction": null,
       "thDirectionAttr": "asc",
-      "labelClass": "MuiButtonBase-root-2363 MuiTableSortLabel-root-2358",
+      "labelClass": "MuiButtonBase-root-1692 MuiTableSortLabel-root-1687",
       "iconClass": ""
     },
     {
@@ -166,7 +166,7 @@
       "active": false,
       "direction": null,
       "thDirectionAttr": "asc",
-      "labelClass": "MuiButtonBase-root-2363 MuiTableSortLabel-root-2358",
+      "labelClass": "MuiButtonBase-root-1692 MuiTableSortLabel-root-1687",
       "iconClass": ""
     }
   ],

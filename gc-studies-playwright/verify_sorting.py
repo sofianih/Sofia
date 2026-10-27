@@ -276,7 +276,8 @@ def verify_column(page, col, col_type):
 CSS = """
 body{font-family:Segoe UI,Arial,sans-serif;margin:24px;background:#f4f8fb;color:#0f1c2e}
 h1{margin:0 0 6px;font-size:1.35rem}
-.meta{color:#5a6a7e;font-size:.9rem;margin:0 0 18px}
+.meta{color:#5a6a7e;font-size:.9rem;margin:0 0 12px}
+.default{margin:0 0 18px;font-size:.95rem}
 table{width:100%;border-collapse:collapse;background:#fff}
 th,td{border-bottom:1px solid #d7e0ea;padding:10px 12px;text-align:left;font-size:.95rem;vertical-align:top}
 th{background:#f7fafc}
@@ -307,7 +308,9 @@ def _dir_cell(result, direction):
 
 
 def report_html(default_sort, columns_meta, results, meta):
-    del default_sort, columns_meta  # unused in simple report
+    del columns_meta  # unused in simple report
+    def_name = html.escape(default_sort.get("name") or "—")
+    def_dir = html.escape((default_sort.get("direction") or "—").upper())
     rows = []
     for r in results:
         sortable = "yes" if r.get("sortable_ui") and r.get("status") != "NOT_SORTABLE" else "no"
@@ -322,6 +325,7 @@ def report_html(default_sort, columns_meta, results, meta):
 <h1>GC Studies — Sorting</h1>
 <p class=meta><a href="{html.escape(URL)}">{html.escape(URL)}</a> ·
 {html.escape(meta['collected_at'])} · {meta.get('row_count', '—')} rows</p>
+<p class=default><b>Default sort:</b> {def_name} · {def_dir}</p>
 <table>
 <thead><tr><th>Column</th><th>Sortable?</th><th>Ascending</th><th>Descending</th></tr></thead>
 <tbody>{''.join(rows)}</tbody>
