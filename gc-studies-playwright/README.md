@@ -1,6 +1,6 @@
 # GC Studies Playwright scraper
 
-Compact headed Chromium scrape of the General Commons Studies page.
+Compact Chromium scrape of the General Commons Studies page (headed by default).
 
 - Reads **statbar** Studies / Participants / Samples / Files
 - Scrapes each Study’s participants + files from the table
@@ -17,11 +17,49 @@ python3 -m playwright install chromium
 
 ## Run
 
-Default is **production** (headed):
+Default is **production** + **headed** (browser visible):
 
 ```bash
 python3 scrape_studies.py
 ```
+
+### Headed / headless
+
+| Mode | How |
+| --- | --- |
+| Headed (default) | `python3 scrape_studies.py` or `--headed` |
+| Headless | `HEADLESS=1 python3 scrape_studies.py` or `--headless` |
+
+```bash
+# see the browser
+python3 scrape_studies.py --headed
+
+# no browser window (CI / remote)
+HEADLESS=1 python3 scrape_studies.py
+python3 scrape_studies.py --headless
+```
+
+**PowerShell:**
+
+```powershell
+# headed (default) — watch the browser
+python scrape_studies.py
+python scrape_studies.py --headed
+
+# headless
+$env:HEADLESS = "1"; python scrape_studies.py
+python scrape_studies.py --headless
+
+# QA2 + headed
+$env:GC_STUDIES_URL = "https://general-qa2.datacommons.cancer.gov/#/studies"
+python scrape_studies.py --headed
+
+# QA2 + headless
+$env:HEADLESS = "1"
+python scrape_studies.py --url "https://general-qa2.datacommons.cancer.gov/#/studies"
+```
+
+Also accepts `PLAYWRIGHT_HEADLESS=1` (same as `HEADLESS`).
 
 ### Switch environment (no code edits)
 
@@ -33,18 +71,10 @@ python3 scrape_studies.py
 | Stage | `https://general-stage.datacommons.cancer.gov/#/studies` |
 
 ```bash
-# env var (either name works)
 GC_STUDIES_URL='https://general-qa2.datacommons.cancer.gov/#/studies' python3 scrape_studies.py
 BASE_URL='https://general-qa2.datacommons.cancer.gov/#/studies' python3 scrape_studies.py
-
-# CLI
 python3 scrape_studies.py --url 'https://general-qa2.datacommons.cancer.gov/#/studies'
 python3 scrape_studies.py 'https://general-stage.datacommons.cancer.gov/#/studies'
-
-# prod explicitly
-python3 scrape_studies.py --url 'https://general.datacommons.cancer.gov/#/studies'
 ```
-
-Headless (cloud/CI): `HEADLESS=1 python3 scrape_studies.py`
 
 Optional: `GC_BASECOUNT_XLSX`, `GC_OUTPUT_DIR`

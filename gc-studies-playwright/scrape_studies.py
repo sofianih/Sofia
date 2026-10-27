@@ -9,7 +9,6 @@ from playwright.sync_api import sync_playwright
 DIR = Path(__file__).resolve().parent
 DEFAULT_URL = "https://general.datacommons.cancer.gov/#/studies"
 OUT = Path(os.environ.get("GC_OUTPUT_DIR", DIR / "output"))
-HEADLESS = os.environ.get("HEADLESS", os.environ.get("PLAYWRIGHT_HEADLESS", "")).lower() in {"1", "true", "yes", "on"}
 
 
 def resolve_url():
@@ -25,7 +24,23 @@ def resolve_url():
     return (os.environ.get("GC_STUDIES_URL") or os.environ.get("BASE_URL") or DEFAULT_URL).strip() or DEFAULT_URL
 
 
+def resolve_headless():
+    """Default headed. CLI --headless / --headed wins; else HEADLESS / PLAYWRIGHT_HEADLESS."""
+    args = {a.lower() for a in sys.argv[1:]}
+    if "--headed" in args or "-headed" in args:
+        return False
+    if "--headless" in args or "-headless" in args:
+        return True
+    raw = (os.environ.get("HEADLESS") or os.environ.get("PLAYWRIGHT_HEADLESS") or "").strip().lower()
+    if raw in {"0", "false", "no", "off", "headed"}:
+        return False
+    if raw in {"1", "true", "yes", "on", "headless"}:
+        return True
+    return False  # local default: headed
+
+
 URL = resolve_url()
+HEADLESS = resolve_headless()
 
 
 def num(v):
@@ -151,7 +166,6 @@ def report_html(statbar, studies, meta):
 <p>Source: <a href="{html.escape(URL)}">{html.escape(URL)}</a> · Baseline: <code>{html.escape(Path(meta['excel']).name)}</code> ·
 {html.escape(meta['collected_at'])} · {'headed' if not meta['headless'] else 'headless'}</p>
 <div class=bar>{cards}</div>
-<p>Primary totals from page statbar (<code>#statsbar_title_*</code>), not table sums.</p>
 <div class=sec><span>PASS: <b class=ok>{passes}</b></span><span>FAIL/gaps: <b class=bad>{len(studies)-passes}</b></span>
 <span>Table sum · Participants: {fmt(tpart)} (secondary)</span><span>Table sum · Files: {fmt(tfiles)} (secondary)</span></div>
 <table><thead><tr><th>#</th><th>Study</th><th>Name</th><th class=n>UI Part.</th><th class=n>Excel Part.</th>
