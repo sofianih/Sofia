@@ -78,3 +78,15 @@ python3 scrape_studies.py 'https://general-stage.datacommons.cancer.gov/#/studie
 ```
 
 Optional: `GC_BASECOUNT_XLSX`, `GC_OUTPUT_DIR`
+
+## Sorting verification
+
+```bash
+# default headless
+python3 verify_sorting.py
+HEADLESS=0 python3 verify_sorting.py --headed
+GC_STUDIES_URL='https://general-qa2.datacommons.cancer.gov/#/studies' python3 verify_sorting.py
+```
+
+Writes `output/gc-studies-sorting-report.html` and `output/sorting-results.json`.
+Checks default sort (Study Name ASC) and asc/desc order for every column.
