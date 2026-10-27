@@ -1,9 +1,11 @@
 # GC Studies Playwright scraper
 
 Drives the real General Commons Studies UI in Chromium (no GraphQL/API shortcuts),
-visits every study listed on the page, and writes an HTML inventory report.
+visits every study listed on the page, compares PHS / participants / file counts to
+the baseline Excel workbook, and writes an HTML pass/fail report.
 
-Source page: https://general.datacommons.cancer.gov/#/studies
+Source page: https://general.datacommons.cancer.gov/#/studies  
+Baseline: `data/GC_Studypage_Basecount.xlsx`
 
 ## What it captures
 
@@ -13,6 +15,7 @@ For each study (expected: **61**):
 - Number of participants
 - Number of files
 - Study name, program, data types, access (from the listing table)
+- Pass / fail vs the Excel baseline (participants + files)
 
 ## Install
 
@@ -30,11 +33,21 @@ On first run you may also need OS deps:
 python3 -m playwright install --with-deps chromium
 ```
 
-## Run
+## Run (headed — default for local)
+
+The browser window is shown by default:
 
 ```bash
 cd gc-studies-playwright
 python3 scrape_studies.py
+```
+
+### Headless override (cloud / CI / no display)
+
+```bash
+HEADLESS=1 python3 scrape_studies.py
+# or
+PLAYWRIGHT_HEADLESS=1 python3 scrape_studies.py
 ```
 
 Optional env vars:
@@ -42,19 +55,31 @@ Optional env vars:
 | Variable | Default | Meaning |
 | --- | --- | --- |
 | `GC_STUDIES_URL` | `https://general.datacommons.cancer.gov/#/studies` | Studies listing URL |
-| `PLAYWRIGHT_HEADLESS` | `1` | Set `0` to show the browser |
+| `GC_BASECOUNT_XLSX` | `./data/GC_Studypage_Basecount.xlsx` | Excel comparison baseline |
+| `HEADLESS` / `PLAYWRIGHT_HEADLESS` | unset → **headed** | Set `1` / `true` for headless |
 | `GC_OUTPUT_DIR` | `./output` | Where JSON + HTML are written |
 
 Outputs (under `output/` by default):
 
-- `gc-studies-playwright-report.html` — browsable report
-- `studies.json` — raw scraped records
+- `gc-studies-playwright-report.html` — browsable pass/fail report
+- `studies.json` — scraped + comparison records
+
+## Comparison rules
+
+1. Load baseline rows that have a Study / PHS id (version-only continuation rows are ignored).
+2. Match UI studies to Excel by normalized PHS / study ID (case-insensitive).
+3. Compare **Number of Participants** and **Number of Files** (Excel column may be spelled `Nubmer of Files`).
+4. Status per study:
+   - **PASS** — both counts match
+   - **FAIL** — PHS found in Excel but one or both counts differ
+   - **MISSING_IN_BASE** — scraped from UI but not in Excel
+   - **MISSING_IN_UI** — present in Excel but not scraped from UI
 
 ## How the UI is driven
 
-1. Open the Studies page
+1. Open the Studies page (headed Chromium by default)
 2. Dismiss the government warning dialog (`Continue`)
 3. Set **Rows per page** to `100` so all studies appear in the table
 4. Read every listing row (PHS link, participants, files, metadata)
-5. Click/navigate to each study’s `#/study/<id>` detail page and re-read PHS, participants, and files from that page
-6. Emit the HTML report from the scraped UI data
+5. Navigate to each study’s `#/study/<id>` detail page and re-read PHS, participants, and files
+6. Compare against `data/GC_Studypage_Basecount.xlsx` and emit the HTML report
