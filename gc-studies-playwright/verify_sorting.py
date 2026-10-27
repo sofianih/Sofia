@@ -274,103 +274,58 @@ def verify_column(page, col, col_type):
 
 
 CSS = """
-body{font-family:Segoe UI,Arial,sans-serif;margin:24px;background:#f4f8fb;color:#0f1c2e;line-height:1.45}
-h1{margin:0 0 8px} h2{margin:28px 0 10px;font-size:1.15rem}
-.meta{color:#5a6a7e;font-size:.92rem;margin-bottom:16px}
-.card{background:#fff;border:1px solid #d7e0ea;border-radius:10px;padding:14px 16px;margin:12px 0}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin:12px 0 20px}
-.stat{background:#fff;border:1px solid #d7e0ea;border-radius:10px;padding:12px}
-.stat b{display:block;font-size:1.4rem;margin-top:4px}
-.ok{color:#0f7a4a;font-weight:700}.bad{color:#a11;font-weight:700}.warn{color:#8a4b12;font-weight:700}
-table{width:100%;border-collapse:collapse;background:#fff;margin-top:8px}
-th,td{border-bottom:1px solid #d7e0ea;padding:8px 10px;text-align:left;font-size:.9rem;vertical-align:top}
-th{background:#f7fafc;position:sticky;top:0}
-code,pre{font-family:ui-monospace,Consolas,monospace;font-size:.82rem}
-.sample{color:#5a6a7e;font-size:.8rem}
-.badge{display:inline-block;padding:2px 8px;border-radius:6px;font-size:.8rem;font-weight:700}
-.badge.pass{background:#e6f6ee;color:#0f7a4a}.badge.fail{background:#fde8e8;color:#a11}
-.badge.ns{background:#fff4e5;color:#8a4b12}
-ul{margin:6px 0 0 18px}
+body{font-family:Segoe UI,Arial,sans-serif;margin:24px;background:#f4f8fb;color:#0f1c2e}
+h1{margin:0 0 6px;font-size:1.35rem}
+.meta{color:#5a6a7e;font-size:.9rem;margin:0 0 18px}
+table{width:100%;border-collapse:collapse;background:#fff}
+th,td{border-bottom:1px solid #d7e0ea;padding:10px 12px;text-align:left;font-size:.95rem;vertical-align:top}
+th{background:#f7fafc}
+.ok{color:#0f7a4a;font-weight:700}.bad{color:#a11;font-weight:700}.na{color:#5a6a7e}
+.sample{display:block;margin-top:4px;color:#5a6a7e;font-size:.8rem;font-weight:400}
 a{color:#0b6e99}
 """
 
 
+def _dir_cell(result, direction):
+    """PASS/FAIL (or —) for one direction, with a short first-values sample."""
+    if result.get("status") == "NOT_SORTABLE" or not result.get("sortable_ui"):
+        return "<span class=na>—</span>"
+    click = next(
+        (c for c in result.get("clicks") or [] if c.get("ui_direction") == direction),
+        None,
+    )
+    if not click:
+        return "<span class=bad>FAIL</span>"
+    label = "PASS" if click.get("order_ok") else "FAIL"
+    cls = "ok" if click.get("order_ok") else "bad"
+    sample = click.get("sample_first3") or []
+    sample_html = ""
+    if sample:
+        shown = ", ".join(html.escape(str(v)) for v in sample[:3])
+        sample_html = f"<span class=sample>{shown}</span>"
+    return f"<span class={cls}>{label}</span>{sample_html}"
+
+
 def report_html(default_sort, columns_meta, results, meta):
-    passes = sum(1 for r in results if r["status"] == "PASS")
-    fails = sum(1 for r in results if r["status"] == "FAIL")
-    ns = sum(1 for r in results if r["status"] == "NOT_SORTABLE")
-    def_name = default_sort.get("name") or "—"
-    def_dir = (default_sort.get("direction") or "—").upper()
+    del default_sort, columns_meta  # unused in simple report
     rows = []
     for r in results:
-        badge = {"PASS": "pass", "FAIL": "fail", "NOT_SORTABLE": "ns"}.get(r["status"], "ns")
-        click_bits = []
-        for c in r.get("clicks") or []:
-            mark = "✓" if c.get("order_ok") else "✗"
-            click_bits.append(
-                f"<div>Click {c['click']}: UI <b>{(c.get('ui_direction') or '?').upper()}</b> "
-                f"active={c.get('ui_active')} order={mark} "
-                f"<span class=sample>{html.escape(str(c.get('sample_first3')))}</span></div>"
-            )
-            if c.get("detail"):
-                click_bits.append(f"<div class=sample>{html.escape(str(c['detail']))}</div>")
-        notes = "".join(f"<li>{html.escape(n)}</li>" for n in r.get("notes") or [])
-        notes_html = f"<ul>{notes}</ul>" if notes else ""
+        sortable = "yes" if r.get("sortable_ui") and r.get("status") != "NOT_SORTABLE" else "no"
         rows.append(
-            f"<tr><td>{r['index']}</td><td>{html.escape(r['name'])}<div class=sample>{html.escape(r.get('field') or '')}</div></td>"
-            f"<td>{r['type']}</td><td>{'yes' if r.get('sortable_ui') else 'no'}</td>"
-            f"<td><span class='badge {badge}'>{r['status']}</span></td>"
-            f"<td>{''.join(click_bits)}{notes_html}</td></tr>"
+            f"<tr><td>{html.escape(r['name'])}</td>"
+            f"<td>{sortable}</td>"
+            f"<td>{_dir_cell(r, 'asc')}</td>"
+            f"<td>{_dir_cell(r, 'desc')}</td></tr>"
         )
-    first_rows = meta.get("default_first_rows") or []
-    first_html = "".join(
-        f"<tr>{''.join(f'<td>{html.escape(str(c))}</td>' for c in row)}</tr>" for row in first_rows[:5]
-    )
-    header_cells = "".join(f"<th>{html.escape(c['name'])}</th>" for c in columns_meta)
     return f"""<!DOCTYPE html><html><head><meta charset=utf-8>
-<title>GC Studies — Sorting Verification</title><style>{CSS}</style></head><body>
-<h1>GC Studies — Sorting verification</h1>
-<p class=meta>Source: <a href="{html.escape(URL)}">{html.escape(URL)}</a> ·
-{html.escape(meta['collected_at'])} · {'headless' if meta['headless'] else 'headed'} ·
-rows shown: {meta.get('row_count', '—')}</p>
-
-<div class=grid>
-  <div class=stat>Default sort column<b>{html.escape(def_name)}</b></div>
-  <div class=stat>Default direction<b>{html.escape(def_dir)}</b></div>
-  <div class=stat>PASS<b class=ok>{passes}</b></div>
-  <div class=stat>FAIL<b class=bad>{fails}</b></div>
-  <div class=stat>Not sortable<b class=warn>{ns}</b></div>
-</div>
-
-<div class=card>
-  <h2 style="margin-top:0">Default sort findings</h2>
-  <p>Active MUI sort label: <b>{html.escape(def_name)}</b>
-  · direction from icon/class: <b>{html.escape(def_dir)}</b>
-  · field class: <code>{html.escape(default_sort.get('fieldClass') or '')}</code>
-  · label class contains <code>MuiTableSortLabel-active</code>: {str(bool(default_sort.get('active'))).lower()}</p>
-  <p class=sample>Evidence: icon class <code>{html.escape(default_sort.get('iconClass') or '')}</code>;
-  th direction attr <code>{html.escape(str(default_sort.get('thDirectionAttr') or ''))}</code></p>
-  <p>First rows after load (Study Name should be A→Z if default is Study Name ASC):</p>
-  <table><thead><tr>{header_cells}</tr></thead><tbody>{first_html}</tbody></table>
-</div>
-
-<h2>Per-column results</h2>
+<title>GC Studies — Sorting</title><style>{CSS}</style></head><body>
+<h1>GC Studies — Sorting</h1>
+<p class=meta><a href="{html.escape(URL)}">{html.escape(URL)}</a> ·
+{html.escape(meta['collected_at'])} · {meta.get('row_count', '—')} rows</p>
 <table>
-<thead><tr><th>#</th><th>Column</th><th>Type</th><th>Sort UI</th><th>Status</th><th>Clicks / order checks</th></tr></thead>
+<thead><tr><th>Column</th><th>Sortable?</th><th>Ascending</th><th>Descending</th></tr></thead>
 <tbody>{''.join(rows)}</tbody>
 </table>
-
-<div class=card>
-  <h2 style="margin-top:0">Method</h2>
-  <ul>
-    <li>Open Studies page; dismiss Continue gate if present; set rows-per-page to 100.</li>
-    <li>Read default active <code>MuiTableSortLabel</code> + Asc/Desc icon class.</li>
-    <li>For each column with a sort label: click header, assert UI direction + row order
-      (text via JS <code>localeCompare</code> / sensitivity base; numeric stripping commas);
-      click again for reverse.</li>
-    <li>PASS requires both directions to match expected order and direction to toggle.</li>
-  </ul>
-</div>
 </body></html>"""
 
 
