@@ -7,9 +7,25 @@ import pandas as pd
 from playwright.sync_api import sync_playwright
 
 DIR = Path(__file__).resolve().parent
-URL = os.environ.get("GC_STUDIES_URL", "https://general.datacommons.cancer.gov/#/studies")
+DEFAULT_URL = "https://general.datacommons.cancer.gov/#/studies"
 OUT = Path(os.environ.get("GC_OUTPUT_DIR", DIR / "output"))
 HEADLESS = os.environ.get("HEADLESS", os.environ.get("PLAYWRIGHT_HEADLESS", "")).lower() in {"1", "true", "yes", "on"}
+
+
+def resolve_url():
+    """CLI (--url=… / --url … / bare https…) then GC_STUDIES_URL / BASE_URL, else prod."""
+    args = sys.argv[1:]
+    for i, a in enumerate(args):
+        if a.startswith("--url="):
+            return a.split("=", 1)[1].strip() or DEFAULT_URL
+        if a in ("--url", "-u") and i + 1 < len(args):
+            return args[i + 1].strip() or DEFAULT_URL
+        if a.startswith("http"):
+            return a.strip()
+    return (os.environ.get("GC_STUDIES_URL") or os.environ.get("BASE_URL") or DEFAULT_URL).strip() or DEFAULT_URL
+
+
+URL = resolve_url()
 
 
 def num(v):
