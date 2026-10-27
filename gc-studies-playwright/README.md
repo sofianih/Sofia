@@ -1,21 +1,27 @@
 # GC Studies Playwright scraper
 
 Drives the real General Commons Studies UI in Chromium (no GraphQL/API shortcuts),
+reads the page **statbar** totals (Studies / Participants / Samples / Files),
 visits every study listed on the page, compares PHS / participants / file counts to
 the baseline Excel workbook, and writes an HTML pass/fail report.
 
 Source page: https://general.datacommons.cancer.gov/#/studies  
-Baseline: `data/GC_Studypage_Basecount.xlsx`
+
+**Baseline Excel (primary):** `GC Studypage_Basecount.xlsx` at the package root  
+(same location as local: `…\gc-studies-playwright\GC Studypage_Basecount.xlsx`)  
+Fallback: `data/GC_Studypage_Basecount.xlsx`
 
 ## What it captures
 
-For each study (expected: **61**):
+- **Statbar** (page header widgets `#statsbar_title_*`): Studies, Participants, Samples, Files
+- For each study (expected: **61**):
+  - PHS accession / study ID (from the study detail page)
+  - Number of participants
+  - Number of files
+  - Study name, program, data types, access (from the listing table)
+  - Pass / fail vs the Excel baseline (participants + files)
 
-- PHS accession / study ID (from the study detail page)
-- Number of participants
-- Number of files
-- Study name, program, data types, access (from the listing table)
-- Pass / fail vs the Excel baseline (participants + files)
+Primary report totals are the **statbar** values. Table column sums are secondary cross-checks only.
 
 ## Install
 
@@ -55,13 +61,13 @@ Optional env vars:
 | Variable | Default | Meaning |
 | --- | --- | --- |
 | `GC_STUDIES_URL` | `https://general.datacommons.cancer.gov/#/studies` | Studies listing URL |
-| `GC_BASECOUNT_XLSX` | `./data/GC_Studypage_Basecount.xlsx` | Excel comparison baseline |
+| `GC_BASECOUNT_XLSX` | auto: package-root `GC Studypage_Basecount.xlsx`, then `data/` | Excel comparison baseline |
 | `HEADLESS` / `PLAYWRIGHT_HEADLESS` | unset → **headed** | Set `1` / `true` for headless |
 | `GC_OUTPUT_DIR` | `./output` | Where JSON + HTML are written |
 
 Outputs (under `output/` by default):
 
-- `gc-studies-playwright-report.html` — browsable pass/fail report
+- `gc-studies-playwright-report.html` — browsable pass/fail report (statbar primary)
 - `studies.json` — scraped + comparison records
 
 ## Comparison rules
@@ -79,7 +85,8 @@ Outputs (under `output/` by default):
 
 1. Open the Studies page (headed Chromium by default)
 2. Dismiss the government warning dialog (`Continue`)
-3. Set **Rows per page** to `100` so all studies appear in the table
-4. Read every listing row (PHS link, participants, files, metadata)
-5. Navigate to each study’s `#/study/<id>` detail page and re-read PHS, participants, and files
-6. Compare against `data/GC_Studypage_Basecount.xlsx` and emit the HTML report
+3. Read the **statbar** totals (Studies / Participants / Samples / Files)
+4. Set **Rows per page** to `100` so all studies appear in the table
+5. Read every listing row (PHS link, participants, files, metadata)
+6. Navigate to each study’s `#/study/<id>` detail page and re-read PHS, participants, and files
+7. Compare against package-root `GC Studypage_Basecount.xlsx` (or `data/` fallback) and emit the HTML report

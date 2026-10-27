@@ -32,10 +32,28 @@ STUDIES_URL = os.environ.get(
     "https://general.datacommons.cancer.gov/#/studies",
 ).strip() or "https://general.datacommons.cancer.gov/#/studies"
 
-DEFAULT_EXCEL = PACKAGE_DIR / "data" / "GC_Studypage_Basecount.xlsx"
-EXCEL_PATH = Path(
-    os.environ.get("GC_BASECOUNT_XLSX", str(DEFAULT_EXCEL)).strip() or str(DEFAULT_EXCEL)
-)
+# Primary local path matches the user's package-root workbook (note the space).
+# Fallbacks keep older/data/ copies working.
+EXCEL_CANDIDATES = [
+    PACKAGE_DIR / "GC Studypage_Basecount.xlsx",
+    PACKAGE_DIR / "GC_Studypage_Basecount.xlsx",
+    PACKAGE_DIR / "data" / "GC_Studypage_Basecount.xlsx",
+    PACKAGE_DIR / "data" / "GC Studypage_Basecount.xlsx",
+]
+
+
+def resolve_excel_path() -> Path:
+    env = os.environ.get("GC_BASECOUNT_XLSX", "").strip()
+    if env:
+        return Path(env)
+    for candidate in EXCEL_CANDIDATES:
+        if candidate.is_file():
+            return candidate
+    # Default to the package-root filename the user keeps locally.
+    return EXCEL_CANDIDATES[0]
+
+
+EXCEL_PATH = resolve_excel_path()
 
 OUTPUT_DIR = Path(os.environ.get("GC_OUTPUT_DIR", str(PACKAGE_DIR / "output")))
 EXPECTED_STUDIES = 61
@@ -131,6 +149,57 @@ def dismiss_warning_dialog(page: Page) -> None:
 
 def wait_for_studies_table(page: Page) -> None:
     page.locator("table tbody tr").first.wait_for(state="visible", timeout=60000)
+
+
+def read_statbar(page: Page) -> dict[str, int | None]:
+    """
+    Read the Studies page header statbar widgets from the live DOM.
+
+    Targets elements with ids ``statsbar_title_1`` … ``statsbar_title_N``
+    (Studies / Participants / Samples / Files). These are portal totals —
+    not sums of the studies table columns.
+    """
+    try:
+        page.locator("[id^=statsbar_title_]").first.wait_for(state="visible", timeout=30000)
+    except PlaywrightTimeoutError:
+        log("WARNING: statsbar_title_* widgets not found")
+        return {"studies": None, "participants": None, "samples": None, "files": None}
+
+    raw = page.evaluate(
+        """() => {
+          const out = {};
+          for (const el of document.querySelectorAll('[id^=statsbar_title_]')) {
+            const label = (el.innerText || '').trim().toLowerCase();
+            if (!label) continue;
+            const parent = el.parentElement;
+            let count = null;
+            if (parent) {
+              for (const s of parent.children) {
+                const t = (s.innerText || '').trim();
+                if (/^[\\d,]+$/.test(t)) { count = t; break; }
+              }
+              if (count == null) {
+                const m = (parent.innerText || '').match(/([\\d,]+)/);
+                if (m) count = m[1];
+              }
+            }
+            out[label] = count;
+          }
+          return out;
+        }"""
+    )
+    # Normalize keys we care about; keep any extras.
+    result: dict[str, int | None] = {
+        "studies": parse_int(raw.get("studies")),
+        "participants": parse_int(raw.get("participants")),
+        "samples": parse_int(raw.get("samples")),
+        "files": parse_int(raw.get("files")),
+    }
+    for key, val in (raw or {}).items():
+        k = str(key).strip().lower()
+        if k not in result:
+            result[k] = parse_int(val)
+    return result
 
 
 def set_rows_per_page(page: Page, value: str = "100") -> None:
@@ -474,9 +543,13 @@ def fmt_num(n: int | None) -> str:
 
 def generate_html(studies: list[dict[str, Any]], meta: dict[str, Any]) -> str:
     scrape_failures = [s for s in studies if s.get("error") and s.get("compare_status") != "MISSING_IN_UI"]
-    part_sum = sum(s["number_of_participants"] or 0 for s in studies if s.get("number_of_participants") is not None)
-    file_sum = sum(s["number_of_files"] or 0 for s in studies if s.get("number_of_files") is not None)
+    # Secondary cross-check only — never the primary totals.
+    table_part_sum = sum(
+        s["number_of_participants"] or 0 for s in studies if s.get("number_of_participants") is not None
+    )
+    table_file_sum = sum(s["number_of_files"] or 0 for s in studies if s.get("number_of_files") is not None)
     cmp = meta.get("comparison") or {}
+    statbar = meta.get("statbar") or {}
 
     by_part = sorted(
         [s for s in studies if s.get("number_of_participants") is not None],
@@ -648,6 +721,29 @@ def generate_html(studies: list[dict[str, Any]], meta: dict[str, Any]) -> str:
   .stat .hint {{ font-size: 0.8rem; color: var(--muted); margin-top: 4px; }}
   .stat.pass .value {{ color: #0f7a4a; }}
   .stat.fail .value {{ color: #a11; }}
+  .statbar-band {{
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 14px; margin-bottom: 18px;
+    background: linear-gradient(90deg, #d7ebf5 0%, #e8f4ef 100%);
+    border: 2px solid #7eb6d0; border-radius: 16px; padding: 18px;
+    box-shadow: var(--shadow);
+  }}
+  .statbar-band .stat {{
+    background: rgba(255,255,255,0.92); border-color: #9cc9de;
+  }}
+  .statbar-band .stat .label {{ color: #0b6e99; font-weight: 700; }}
+  .statbar-band .stat .value {{ font-size: 1.85rem; }}
+  .statbar-caption {{
+    margin: 0 0 22px; color: var(--muted); font-size: 0.9rem;
+  }}
+  .secondary-stats {{
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 14px; margin-bottom: 28px;
+  }}
+  .secondary-stats .stat {{
+    opacity: 0.95; border-style: dashed;
+  }}
+  .secondary-stats .stat .value {{ font-size: 1.25rem; color: var(--muted); }}
   section.card {{
     background: var(--surface); border: 1px solid var(--line); border-radius: 16px;
     padding: 22px 24px; box-shadow: var(--shadow); margin-bottom: 22px;
@@ -698,8 +794,8 @@ def generate_html(studies: list[dict[str, Any]], meta: dict[str, Any]) -> str:
       <div class="eyebrow">NCI CRDC · General Commons · Playwright UI vs Excel</div>
       <h1>Studies Inventory Report</h1>
       <p>
-        Live UI scrape of every study detail page, compared to the Excel
-        <strong>Study</strong> column baseline for participants and file counts.
+        Live UI scrape of the Studies page <strong>statbar</strong> totals plus every study
+        detail row, compared to the Excel <strong>Study</strong> column baseline.
         Headed Chromium by default (no GraphQL inventory shortcut).
       </p>
       <div class="meta">
@@ -710,21 +806,38 @@ def generate_html(studies: list[dict[str, Any]], meta: dict[str, Any]) -> str:
       </div>
     </header>
 
-    <div class="stats">
+    <div class="statbar-band" aria-label="Studies page statbar totals">
       <div class="stat">
-        <div class="label">Studies (UI)</div>
-        <div class="value">{meta.get('studies_collected', len(studies))}</div>
-        <div class="hint">Expected {EXPECTED_STUDIES}</div>
+        <div class="label">Statbar · Studies</div>
+        <div class="value">{fmt_num(statbar.get('studies'))}</div>
+        <div class="hint">From page header widget</div>
       </div>
       <div class="stat">
-        <div class="label">Excel baseline</div>
-        <div class="value">{cmp.get('baseline_studies', '—')}</div>
-        <div class="hint">Study column rows</div>
+        <div class="label">Statbar · Participants</div>
+        <div class="value">{fmt_num(statbar.get('participants'))}</div>
+        <div class="hint">From page header widget</div>
       </div>
+      <div class="stat">
+        <div class="label">Statbar · Samples</div>
+        <div class="value">{fmt_num(statbar.get('samples'))}</div>
+        <div class="hint">From page header widget</div>
+      </div>
+      <div class="stat">
+        <div class="label">Statbar · Files</div>
+        <div class="value">{fmt_num(statbar.get('files'))}</div>
+        <div class="hint">From page header widget</div>
+      </div>
+    </div>
+    <p class="statbar-caption">
+      Primary totals come from the live Studies page statbar DOM
+      (<code>#statsbar_title_*</code>), not from summing table columns.
+    </p>
+
+    <div class="secondary-stats">
       <div class="stat pass">
-        <div class="label">PASS</div>
+        <div class="label">PASS (vs Excel)</div>
         <div class="value">{cmp.get('pass', 0)}</div>
-        <div class="hint">Participants + files match</div>
+        <div class="hint">Per-study participants + files</div>
       </div>
       <div class="stat fail">
         <div class="label">FAIL / gaps</div>
@@ -732,12 +845,19 @@ def generate_html(studies: list[dict[str, Any]], meta: dict[str, Any]) -> str:
         <div class="hint">Fail {cmp.get('fail', 0)} · missing base {cmp.get('missing_in_base', 0)} · missing UI {cmp.get('missing_in_ui', 0)}</div>
       </div>
       <div class="stat">
-        <div class="label">Participants (UI sum)</div>
-        <div class="value">{fmt_num(part_sum)}</div>
+        <div class="label">Excel baseline rows</div>
+        <div class="value">{cmp.get('baseline_studies', '—')}</div>
+        <div class="hint">Study column</div>
       </div>
       <div class="stat">
-        <div class="label">Files (UI sum)</div>
-        <div class="value">{fmt_num(file_sum)}</div>
+        <div class="label">Table sum · Participants</div>
+        <div class="value">{fmt_num(table_part_sum)}</div>
+        <div class="hint">Secondary cross-check only</div>
+      </div>
+      <div class="stat">
+        <div class="label">Table sum · Files</div>
+        <div class="value">{fmt_num(table_file_sum)}</div>
+        <div class="hint">Secondary cross-check only</div>
       </div>
     </div>
 
@@ -840,6 +960,16 @@ def main() -> int:
         page.goto(STUDIES_URL, wait_until="domcontentloaded", timeout=120000)
         dismiss_warning_dialog(page)
         wait_for_studies_table(page)
+
+        statbar = read_statbar(page)
+        log(
+            "Statbar (page header): "
+            f"Studies={statbar.get('studies')} "
+            f"Participants={statbar.get('participants')} "
+            f"Samples={statbar.get('samples')} "
+            f"Files={statbar.get('files')}"
+        )
+
         set_rows_per_page(page, "100")
 
         listing = read_listing_rows(page)
@@ -880,6 +1010,11 @@ def main() -> int:
     studies = [finalize_record(r) for r in scraped_raw]
     studies, comparison = compare_to_baseline(studies, baseline)
 
+    table_part_sum = sum(
+        s["number_of_participants"] or 0 for s in studies if s.get("number_of_participants") is not None
+    )
+    table_file_sum = sum(s["number_of_files"] or 0 for s in studies if s.get("number_of_files") is not None)
+
     ended = datetime.now(timezone.utc)
     meta = {
         "source_url": STUDIES_URL,
@@ -889,6 +1024,9 @@ def main() -> int:
         "listing_count": len(listing),
         "studies_collected": sum(1 for s in studies if s.get("compare_status") != "MISSING_IN_UI"),
         "detail_ok_count": sum(1 for s in studies if s.get("detail_ok")),
+        "statbar": statbar,
+        "table_sum_participants": table_part_sum,
+        "table_sum_files": table_file_sum,
         "failures": [
             {"phs": s.get("phs"), "error": s.get("error"), "compare_status": s.get("compare_status")}
             for s in studies
@@ -907,7 +1045,11 @@ def main() -> int:
     log(f"Wrote {json_path}")
     log(f"Wrote {html_path}")
     log(
-        f"Done: UI={comparison['ui_studies']} Excel={comparison['baseline_studies']} "
+        f"Done: statbar Studies={statbar.get('studies')} "
+        f"Participants={statbar.get('participants')} "
+        f"Samples={statbar.get('samples')} Files={statbar.get('files')}; "
+        f"table_sum part={table_part_sum} files={table_file_sum}; "
+        f"UI={comparison['ui_studies']} Excel={comparison['baseline_studies']} "
         f"PASS={comparison['pass']} FAIL={comparison['fail']} "
         f"missing_base={comparison['missing_in_base']} missing_ui={comparison['missing_in_ui']} "
         f"in {meta['duration_sec']}s (headless={actual_headless})"
