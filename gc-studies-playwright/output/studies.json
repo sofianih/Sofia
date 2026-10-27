@@ -1,8 +1,9 @@
 {
   "meta": {
     "excel": "/workspace/gc-studies-playwright/GC Studypage_Basecount.xlsx",
-    "collected_at": "2026-10-27 17:02 UTC",
-    "headless": false,
+    "sorting_baseline": "/workspace/gc-studies-playwright/sorting_baseline.json",
+    "collected_at": "2026-10-27 21:51 UTC",
+    "headless": true,
     "statbar": {
       "studies": 61,
       "participants": 122493,
@@ -10,7 +11,16 @@
       "files": 622840
     },
     "pass": 61,
-    "fail": 0
+    "fail": 0,
+    "sort_pass": 8,
+    "sort_fail": 0,
+    "default_sort": {
+      "live_name": "Study Name",
+      "live_direction": "asc",
+      "expected_name": "Study Name",
+      "expected_direction": "asc",
+      "status": "PASS"
+    }
   },
   "studies": [
     {
@@ -684,5 +694,428 @@
       "status": "PASS",
       "detail": ""
     }
-  ]
+  ],
+  "sorting_live": {
+    "default": {
+      "index": 2,
+      "name": "Study Name",
+      "fieldClass": "study_name",
+      "sortable": true,
+      "active": true,
+      "direction": "asc"
+    },
+    "results": [
+      {
+        "index": 0,
+        "name": "Study",
+        "type": "text",
+        "sortable_ui": true,
+        "clicks": [
+          {
+            "click": 1,
+            "ui_direction": "asc",
+            "sample_first3": [
+              "10.17917",
+              "phs000720",
+              "phs001228"
+            ],
+            "order_ok": true
+          },
+          {
+            "click": 2,
+            "ui_direction": "desc",
+            "sample_first3": [
+              "phs004225",
+              "phs004217",
+              "phs004216"
+            ],
+            "order_ok": true
+          }
+        ],
+        "status": "PASS"
+      },
+      {
+        "index": 1,
+        "name": "Study Version",
+        "type": "text",
+        "sortable_ui": true,
+        "clicks": [
+          {
+            "click": 1,
+            "ui_direction": "asc",
+            "sample_first3": [
+              "10.17917.v1",
+              "phs000720.v5.p1",
+              "phs001228.v2.p2"
+            ],
+            "order_ok": true
+          },
+          {
+            "click": 2,
+            "ui_direction": "desc",
+            "sample_first3": [
+              "phs004225.v1.p1",
+              "phs004217.v1.p1",
+              "phs004216.v1.p1"
+            ],
+            "order_ok": true
+          }
+        ],
+        "status": "PASS"
+      },
+      {
+        "index": 2,
+        "name": "Study Name",
+        "type": "text",
+        "sortable_ui": true,
+        "clicks": [
+          {
+            "click": 1,
+            "ui_direction": "asc",
+            "sample_first3": [
+              "ACRIN 6677/RTOG 0625",
+              "caNanoLab Data",
+              "Characterization of tumor immune microenvironment in HPV-associated oropharynx cancer"
+            ],
+            "order_ok": true
+          },
+          {
+            "click": 2,
+            "ui_direction": "desc",
+            "sample_first3": [
+              "Wistar PDX Development and Trial Center SPORE in Skin Cancer",
+              "Whole Genome Sequencing to Discover Familial Myeloma Risk Genes",
+              "Washington University PDX Development and Trial Center"
+            ],
+            "order_ok": true
+          }
+        ],
+        "status": "PASS"
+      },
+      {
+        "index": 3,
+        "name": "Program Name",
+        "type": "text",
+        "sortable_ui": true,
+        "clicks": [
+          {
+            "click": 1,
+            "ui_direction": "asc",
+            "sample_first3": [
+              "Childhood Cancer Data Initiative",
+              "Childhood Cancer Data Initiative",
+              "Childhood Cancer Data Initiative"
+            ],
+            "order_ok": true
+          },
+          {
+            "click": 2,
+            "ui_direction": "desc",
+            "sample_first3": [
+              "TCIA Radiology Collections",
+              "PDX (patient-derived xenografts) Development and Trial Centers Research Network (PDXNet)",
+              "PDX (patient-derived xenografts) Development and Trial Centers Research Network (PDXNet)"
+            ],
+            "order_ok": true
+          }
+        ],
+        "status": "PASS"
+      },
+      {
+        "index": 4,
+        "name": "Data Types",
+        "type": "text",
+        "sortable_ui": true,
+        "clicks": [
+          {
+            "click": 1,
+            "ui_direction": "asc",
+            "sample_first3": [
+              "Genomics",
+              "Genomics",
+              "Genomics"
+            ],
+            "order_ok": true
+          },
+          {
+            "click": 2,
+            "ui_direction": "desc",
+            "sample_first3": [
+              "Sequence Data, Imaging",
+              "Sequence Data, Copy Number Variation, Methylation Analysis",
+              "Sequence Data, Copy Number Variation, Methylation Analysis"
+            ],
+            "order_ok": true
+          }
+        ],
+        "status": "PASS"
+      },
+      {
+        "index": 5,
+        "name": "Study Access",
+        "type": "text",
+        "sortable_ui": true,
+        "clicks": [
+          {
+            "click": 1,
+            "ui_direction": "asc",
+            "sample_first3": [
+              "Controlled",
+              "Controlled",
+              "Controlled"
+            ],
+            "order_ok": true
+          },
+          {
+            "click": 2,
+            "ui_direction": "desc",
+            "sample_first3": [
+              "Open",
+              "Open",
+              "Controlled"
+            ],
+            "order_ok": true
+          }
+        ],
+        "status": "PASS"
+      },
+      {
+        "index": 6,
+        "name": "Number of Participants",
+        "type": "numeric",
+        "sortable_ui": true,
+        "clicks": [
+          {
+            "click": 1,
+            "ui_direction": "asc",
+            "sample_first3": [
+              "0",
+              "8",
+              "29"
+            ],
+            "order_ok": true
+          },
+          {
+            "click": 2,
+            "ui_direction": "desc",
+            "sample_first3": [
+              "21,784",
+              "12,171",
+              "7,278"
+            ],
+            "order_ok": true
+          }
+        ],
+        "status": "PASS"
+      },
+      {
+        "index": 7,
+        "name": "Number of Files",
+        "type": "numeric",
+        "sortable_ui": true,
+        "clicks": [
+          {
+            "click": 1,
+            "ui_direction": "asc",
+            "sample_first3": [
+              "3",
+              "7",
+              "9"
+            ],
+            "order_ok": true
+          },
+          {
+            "click": 2,
+            "ui_direction": "desc",
+            "sample_first3": [
+              "100,072",
+              "64,701",
+              "49,518"
+            ],
+            "order_ok": true
+          }
+        ],
+        "status": "PASS"
+      }
+    ]
+  },
+  "sorting_vs_baseline": {
+    "default": {
+      "live_name": "Study Name",
+      "live_direction": "asc",
+      "expected_name": "Study Name",
+      "expected_direction": "asc",
+      "status": "PASS"
+    },
+    "columns": [
+      {
+        "name": "Study",
+        "sortable_live": "yes",
+        "sortable_expected": "yes",
+        "asc_live": "PASS",
+        "desc_live": "PASS",
+        "asc_expected": "PASS",
+        "desc_expected": "PASS",
+        "sample_asc": [
+          "10.17917",
+          "phs000720",
+          "phs001228"
+        ],
+        "sample_desc": [
+          "phs004225",
+          "phs004217",
+          "phs004216"
+        ],
+        "status": "PASS",
+        "detail": ""
+      },
+      {
+        "name": "Study Version",
+        "sortable_live": "yes",
+        "sortable_expected": "yes",
+        "asc_live": "PASS",
+        "desc_live": "PASS",
+        "asc_expected": "PASS",
+        "desc_expected": "PASS",
+        "sample_asc": [
+          "10.17917.v1",
+          "phs000720.v5.p1",
+          "phs001228.v2.p2"
+        ],
+        "sample_desc": [
+          "phs004225.v1.p1",
+          "phs004217.v1.p1",
+          "phs004216.v1.p1"
+        ],
+        "status": "PASS",
+        "detail": ""
+      },
+      {
+        "name": "Study Name",
+        "sortable_live": "yes",
+        "sortable_expected": "yes",
+        "asc_live": "PASS",
+        "desc_live": "PASS",
+        "asc_expected": "PASS",
+        "desc_expected": "PASS",
+        "sample_asc": [
+          "ACRIN 6677/RTOG 0625",
+          "caNanoLab Data",
+          "Characterization of tumor immune microenvironment in HPV-associated oropharynx cancer"
+        ],
+        "sample_desc": [
+          "Wistar PDX Development and Trial Center SPORE in Skin Cancer",
+          "Whole Genome Sequencing to Discover Familial Myeloma Risk Genes",
+          "Washington University PDX Development and Trial Center"
+        ],
+        "status": "PASS",
+        "detail": ""
+      },
+      {
+        "name": "Program Name",
+        "sortable_live": "yes",
+        "sortable_expected": "yes",
+        "asc_live": "PASS",
+        "desc_live": "PASS",
+        "asc_expected": "PASS",
+        "desc_expected": "PASS",
+        "sample_asc": [
+          "Childhood Cancer Data Initiative",
+          "Childhood Cancer Data Initiative",
+          "Childhood Cancer Data Initiative"
+        ],
+        "sample_desc": [
+          "TCIA Radiology Collections",
+          "PDX (patient-derived xenografts) Development and Trial Centers Research Network (PDXNet)",
+          "PDX (patient-derived xenografts) Development and Trial Centers Research Network (PDXNet)"
+        ],
+        "status": "PASS",
+        "detail": ""
+      },
+      {
+        "name": "Data Types",
+        "sortable_live": "yes",
+        "sortable_expected": "yes",
+        "asc_live": "PASS",
+        "desc_live": "PASS",
+        "asc_expected": "PASS",
+        "desc_expected": "PASS",
+        "sample_asc": [
+          "Genomics",
+          "Genomics",
+          "Genomics"
+        ],
+        "sample_desc": [
+          "Sequence Data, Imaging",
+          "Sequence Data, Copy Number Variation, Methylation Analysis",
+          "Sequence Data, Copy Number Variation, Methylation Analysis"
+        ],
+        "status": "PASS",
+        "detail": ""
+      },
+      {
+        "name": "Study Access",
+        "sortable_live": "yes",
+        "sortable_expected": "yes",
+        "asc_live": "PASS",
+        "desc_live": "PASS",
+        "asc_expected": "PASS",
+        "desc_expected": "PASS",
+        "sample_asc": [
+          "Controlled",
+          "Controlled",
+          "Controlled"
+        ],
+        "sample_desc": [
+          "Open",
+          "Open",
+          "Controlled"
+        ],
+        "status": "PASS",
+        "detail": ""
+      },
+      {
+        "name": "Number of Participants",
+        "sortable_live": "yes",
+        "sortable_expected": "yes",
+        "asc_live": "PASS",
+        "desc_live": "PASS",
+        "asc_expected": "PASS",
+        "desc_expected": "PASS",
+        "sample_asc": [
+          "0",
+          "8",
+          "29"
+        ],
+        "sample_desc": [
+          "21,784",
+          "12,171",
+          "7,278"
+        ],
+        "status": "PASS",
+        "detail": ""
+      },
+      {
+        "name": "Number of Files",
+        "sortable_live": "yes",
+        "sortable_expected": "yes",
+        "asc_live": "PASS",
+        "desc_live": "PASS",
+        "asc_expected": "PASS",
+        "desc_expected": "PASS",
+        "sample_asc": [
+          "3",
+          "7",
+          "9"
+        ],
+        "sample_desc": [
+          "100,072",
+          "64,701",
+          "49,518"
+        ],
+        "status": "PASS",
+        "detail": ""
+      }
+    ]
+  }
 }

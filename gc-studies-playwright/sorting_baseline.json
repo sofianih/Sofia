@@ -1,0 +1,17 @@
+{
+  "description": "Expected Studies table sorting (prod verified 2026-10-27). Override path with GC_SORTING_BASELINE.",
+  "default": {
+    "name": "Study Name",
+    "direction": "asc"
+  },
+  "columns": [
+    {"name": "Study", "sortable": true, "ascending": "PASS", "descending": "PASS"},
+    {"name": "Study Version", "sortable": true, "ascending": "PASS", "descending": "PASS"},
+    {"name": "Study Name", "sortable": true, "ascending": "PASS", "descending": "PASS"},
+    {"name": "Program Name", "sortable": true, "ascending": "PASS", "descending": "PASS"},
+    {"name": "Data Types", "sortable": true, "ascending": "PASS", "descending": "PASS"},
+    {"name": "Study Access", "sortable": true, "ascending": "PASS", "descending": "PASS"},
+    {"name": "Number of Participants", "sortable": true, "ascending": "PASS", "descending": "PASS"},
+    {"name": "Number of Files", "sortable": true, "ascending": "PASS", "descending": "PASS"}
+  ]
+}
