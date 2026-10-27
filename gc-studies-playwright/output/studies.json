@@ -1,17 +1,25 @@
 {
   "meta": {
     "source_url": "https://general.datacommons.cancer.gov/#/studies",
-    "collected_at": "2026-10-27 14:21 UTC",
+    "collected_at": "2026-10-27 16:22 UTC",
     "browser": "Chromium (Playwright)",
     "headless": false,
     "listing_count": 61,
     "studies_collected": 61,
     "detail_ok_count": 61,
+    "statbar": {
+      "studies": 61,
+      "participants": 122493,
+      "samples": 112967,
+      "files": 622840
+    },
+    "table_sum_participants": 113604,
+    "table_sum_files": 546654,
     "failures": [],
-    "duration_sec": 410.5,
+    "duration_sec": 410.2,
     "method": "playwright-ui-vs-excel",
     "comparison": {
-      "baseline_path": "/workspace/gc-studies-playwright/data/GC_Studypage_Basecount.xlsx",
+      "baseline_path": "/workspace/gc-studies-playwright/GC Studypage_Basecount.xlsx",
       "baseline_studies": 61,
       "ui_studies": 61,
       "pass": 61,
