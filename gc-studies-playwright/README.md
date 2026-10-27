@@ -52,8 +52,8 @@ python3 scrape_studies.py --url 'https://general-qa2.datacommons.cancer.gov/#/st
 
 Optional: `GC_BASECOUNT_XLSX`, `GC_SORTING_BASELINE`, `GC_OUTPUT_DIR`
 
-Baselines:
-- Excel counts: package-root `GC Studypage_Basecount.xlsx` (fallback: `data/`)
-- Sorting: package-root `sorting_baseline.json` (default Study Name ASC; all 8 columns sortable PASS)
+Baselines (both in `gc-studies-playwright/` next to each other):
+- Excel counts: `GC Studypage_Basecount.xlsx` (fallback: `data/`)
+- Sorting: `sorting_baseline.json` (default Study Name ASC; all 8 columns sortable PASS)
 
 `verify_sorting.py` is an alias that runs the same combined flow.

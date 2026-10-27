@@ -72,9 +72,11 @@ def excel_path():
 
 
 def sorting_baseline_path():
+    """Package-root sorting_baseline.json (same folder as GC Studypage_Basecount.xlsx)."""
     env = os.environ.get("GC_SORTING_BASELINE", "").strip()
     if env:
         return Path(env)
+    # Prefer package root alongside Excel baseline; data/ is fallback only.
     for p in (DIR / "sorting_baseline.json", DIR / "data" / "sorting_baseline.json"):
         if p.is_file():
             return p
