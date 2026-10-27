@@ -4,7 +4,7 @@ One Chromium run of the General Commons Studies page (headed by default).
 
 - Reads **statbar** Studies / Participants / Samples / Files
 - Scrapes each Study’s participants + files; compares to Excel baseline
-- Verifies **default sort** and per-column ascending / descending
+- Verifies **default sort** + per-column asc/desc against `sorting_baseline.json`
 - Writes one report: `output/gc-studies-playwright-report.html`
 
 ## Install
@@ -50,8 +50,10 @@ GC_STUDIES_URL='https://general-qa2.datacommons.cancer.gov/#/studies' python3 sc
 python3 scrape_studies.py --url 'https://general-qa2.datacommons.cancer.gov/#/studies'
 ```
 
-Optional: `GC_BASECOUNT_XLSX`, `GC_OUTPUT_DIR`
+Optional: `GC_BASECOUNT_XLSX`, `GC_SORTING_BASELINE`, `GC_OUTPUT_DIR`
 
-Baseline Excel: package-root `GC Studypage_Basecount.xlsx` (fallback: `data/`).
+Baselines:
+- Excel counts: package-root `GC Studypage_Basecount.xlsx` (fallback: `data/`)
+- Sorting: package-root `sorting_baseline.json` (default Study Name ASC; all 8 columns sortable PASS)
 
 `verify_sorting.py` is an alias that runs the same combined flow.

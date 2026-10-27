@@ -71,6 +71,37 @@ def excel_path():
     return DIR / "GC Studypage_Basecount.xlsx"
 
 
+def sorting_baseline_path():
+    env = os.environ.get("GC_SORTING_BASELINE", "").strip()
+    if env:
+        return Path(env)
+    for p in (DIR / "sorting_baseline.json", DIR / "data" / "sorting_baseline.json"):
+        if p.is_file():
+            return p
+    return DIR / "sorting_baseline.json"
+
+
+def load_sorting_baseline(path):
+    data = json.loads(Path(path).read_text(encoding="utf-8"))
+    default = data.get("default") or {}
+    cols = {}
+    for c in data.get("columns") or []:
+        name = (c.get("name") or "").strip()
+        if name:
+            cols[name] = {
+                "name": name,
+                "sortable": bool(c.get("sortable", True)),
+                "ascending": str(c.get("ascending", "PASS")).upper(),
+                "descending": str(c.get("descending", "PASS")).upper(),
+            }
+    return {
+        "default_name": (default.get("name") or "").strip(),
+        "default_direction": (default.get("direction") or "asc").strip().lower(),
+        "columns": cols,
+        "path": str(path),
+    }
+
+
 def load_excel(path):
     df = pd.read_excel(path, engine="openpyxl")
     df.columns = [str(c).strip() for c in df.columns]
@@ -319,6 +350,97 @@ def verify_sorting(page):
     return {"default": default, "results": results}
 
 
+def _live_dir_status(result, direction):
+    if result.get("status") == "NOT_SORTABLE" or not result.get("sortable_ui"):
+        return "—"
+    click = next((c for c in result.get("clicks") or [] if c.get("ui_direction") == direction), None)
+    if not click:
+        return "FAIL"
+    return "PASS" if click.get("order_ok") else "FAIL"
+
+
+def compare_sorting(live, baseline):
+    """Compare live sort results to sorting_baseline.json (like Excel basecount)."""
+    default = live.get("default") or {}
+    live_name = (default.get("name") or "").strip()
+    live_dir = (default.get("direction") or "").strip().lower()
+    exp_name = baseline["default_name"]
+    exp_dir = baseline["default_direction"]
+    default_ok = (
+        live_name.casefold() == exp_name.casefold()
+        and live_dir == exp_dir
+    )
+    default_cmp = {
+        "live_name": live_name or "—",
+        "live_direction": live_dir or "—",
+        "expected_name": exp_name or "—",
+        "expected_direction": exp_dir or "—",
+        "status": "PASS" if default_ok else "FAIL",
+    }
+
+    by_name = {r["name"]: r for r in live.get("results") or []}
+    rows = []
+    seen = set()
+    for name, exp in baseline["columns"].items():
+        seen.add(name.casefold())
+        live_r = by_name.get(name)
+        if not live_r:
+            # try case-insensitive match
+            live_r = next((r for r in by_name.values() if r["name"].casefold() == name.casefold()), None)
+        if not live_r:
+            rows.append({
+                "name": name,
+                "sortable_live": "—", "sortable_expected": "yes" if exp["sortable"] else "no",
+                "asc_live": "—", "desc_live": "—",
+                "asc_expected": exp["ascending"], "desc_expected": exp["descending"],
+                "sample_asc": [], "sample_desc": [],
+                "status": "MISSING_IN_UI", "detail": "in baseline only",
+            })
+            continue
+        sortable_live = live_r.get("sortable_ui") and live_r.get("status") != "NOT_SORTABLE"
+        asc_live = _live_dir_status(live_r, "asc")
+        desc_live = _live_dir_status(live_r, "desc")
+        asc_click = next((c for c in live_r.get("clicks") or [] if c.get("ui_direction") == "asc"), None)
+        desc_click = next((c for c in live_r.get("clicks") or [] if c.get("ui_direction") == "desc"), None)
+        ok = (
+            bool(sortable_live) == bool(exp["sortable"])
+            and asc_live == exp["ascending"]
+            and desc_live == exp["descending"]
+        )
+        rows.append({
+            "name": name,
+            "sortable_live": "yes" if sortable_live else "no",
+            "sortable_expected": "yes" if exp["sortable"] else "no",
+            "asc_live": asc_live, "desc_live": desc_live,
+            "asc_expected": exp["ascending"], "desc_expected": exp["descending"],
+            "sample_asc": (asc_click or {}).get("sample_first3") or [],
+            "sample_desc": (desc_click or {}).get("sample_first3") or [],
+            "status": "PASS" if ok else "FAIL",
+            "detail": "" if ok else (
+                f"live sortable={('yes' if sortable_live else 'no')}/"
+                f"{'yes' if exp['sortable'] else 'no'}; "
+                f"asc {asc_live}/{exp['ascending']}; desc {desc_live}/{exp['descending']}"
+            ),
+        })
+
+    for r in live.get("results") or []:
+        if r["name"].casefold() in seen:
+            continue
+        sortable_live = r.get("sortable_ui") and r.get("status") != "NOT_SORTABLE"
+        rows.append({
+            "name": r["name"],
+            "sortable_live": "yes" if sortable_live else "no",
+            "sortable_expected": "—",
+            "asc_live": _live_dir_status(r, "asc"),
+            "desc_live": _live_dir_status(r, "desc"),
+            "asc_expected": "—", "desc_expected": "—",
+            "sample_asc": [], "sample_desc": [],
+            "status": "MISSING_IN_BASE", "detail": "not in sorting baseline",
+        })
+
+    return {"default": default_cmp, "columns": rows}
+
+
 # --- report ---
 
 CSS = """body{font-family:Segoe UI,Arial,sans-serif;margin:24px;background:#f4f8fb;color:#0f1c2e}
@@ -336,40 +458,45 @@ th{background:#f7fafc;position:sticky;top:0}.n{text-align:right;font-variant-num
 a{color:#0b6e99;text-decoration:none}"""
 
 
-def _dir_cell(result, direction):
-    if result.get("status") == "NOT_SORTABLE" or not result.get("sortable_ui"):
+def _status_span(status, sample=None):
+    if status in (None, "—"):
         return "<span class=na>—</span>"
-    click = next((c for c in result.get("clicks") or [] if c.get("ui_direction") == direction), None)
-    if not click:
-        return "<span class=bad>FAIL</span>"
-    label = "PASS" if click.get("order_ok") else "FAIL"
-    cls = "ok" if click.get("order_ok") else "bad"
-    sample = click.get("sample_first3") or []
+    cls = {"PASS": "ok", "FAIL": "bad"}.get(status, "warn")
     sample_html = ""
     if sample:
         shown = ", ".join(html.escape(str(v)) for v in sample[:3])
         sample_html = f"<span class=sample>{shown}</span>"
-    return f"<span class={cls}>{label}</span>{sample_html}"
+    return f"<span class={cls}>{html.escape(status)}</span>{sample_html}"
 
 
-def sorting_section(sorting):
-    default = sorting.get("default") or {}
-    def_name = html.escape(default.get("name") or "—")
-    def_dir = html.escape((default.get("direction") or "—").upper())
+def sorting_section(sort_cmp, meta):
+    d = sort_cmp.get("default") or {}
+    dcls = "ok" if d.get("status") == "PASS" else "bad"
+    live = f"{html.escape(d.get('live_name') or '—')} · {html.escape((d.get('live_direction') or '—').upper())}"
+    exp = f"{html.escape(d.get('expected_name') or '—')} · {html.escape((d.get('expected_direction') or '—').upper())}"
     rows = []
-    for r in sorting.get("results") or []:
-        sortable = "yes" if r.get("sortable_ui") and r.get("status") != "NOT_SORTABLE" else "no"
+    for r in sort_cmp.get("columns") or []:
+        cls = {"PASS": "ok", "FAIL": "bad"}.get(r["status"], "warn")
+        detail = f"<div class=m>{html.escape(r['detail'])}</div>" if r.get("detail") else ""
         rows.append(
-            f"<tr><td>{html.escape(r['name'])}</td><td>{sortable}</td>"
-            f"<td>{_dir_cell(r, 'asc')}</td><td>{_dir_cell(r, 'desc')}</td></tr>"
+            f"<tr class={cls}><td>{html.escape(r['name'])}</td>"
+            f"<td>{html.escape(r['sortable_live'])}</td>"
+            f"<td>{_status_span(r['asc_live'], r.get('sample_asc'))}</td>"
+            f"<td>{_status_span(r['desc_live'], r.get('sample_desc'))}</td>"
+            f"<td class={cls}>{r['status']}{detail}</td></tr>"
         )
-    return f"""<h2>Sorting</h2>
-<p class=default><b>Default sort:</b> {def_name} · {def_dir}</p>
-<table><thead><tr><th>Column</th><th>Sortable?</th><th>Ascending</th><th>Descending</th></tr></thead>
+    sp = meta.get("sort_pass", 0)
+    sf = meta.get("sort_fail", 0)
+    return f"""<h2>Sorting vs baseline</h2>
+<p class=default><b>Default sort:</b> {live}
+<span class={dcls}> {d.get('status', '—')}</span>
+<span class=m> (expected {exp} · <code>{html.escape(Path(meta.get('sorting_baseline') or '').name)}</code>)</span></p>
+<div class=sec><span>Sort PASS: <b class=ok>{sp}</b></span><span>Sort FAIL/gaps: <b class=bad>{sf}</b></span></div>
+<table><thead><tr><th>Column</th><th>Sortable?</th><th>Ascending</th><th>Descending</th><th>vs baseline</th></tr></thead>
 <tbody>{''.join(rows)}</tbody></table>"""
 
 
-def report_html(statbar, studies, sorting, meta):
+def report_html(statbar, studies, sort_cmp, meta):
     passes = sum(1 for s in studies if s["status"] == "PASS")
     tpart = sum(s["participants"] or 0 for s in studies if s["participants"] is not None)
     tfiles = sum(s["files"] or 0 for s in studies if s["files"] is not None)
@@ -391,12 +518,14 @@ def report_html(statbar, studies, sorting, meta):
     return f"""<!DOCTYPE html><html><head><meta charset=utf-8><title>GC Studies Report</title>
 <style>{CSS}</style></head><body>
 <h1>GC Studies — Playwright report</h1>
-<p>Source: <a href="{html.escape(URL)}">{html.escape(URL)}</a> · Baseline: <code>{html.escape(Path(meta['excel']).name)}</code> ·
+<p>Source: <a href="{html.escape(URL)}">{html.escape(URL)}</a> ·
+Excel: <code>{html.escape(Path(meta['excel']).name)}</code> ·
+Sort baseline: <code>{html.escape(Path(meta.get('sorting_baseline') or '').name)}</code> ·
 {html.escape(meta['collected_at'])} · {'headed' if not meta['headless'] else 'headless'}</p>
 <div class=bar>{cards}</div>
-<div class=sec><span>PASS: <b class=ok>{passes}</b></span><span>FAIL/gaps: <b class=bad>{len(studies)-passes}</b></span>
+<div class=sec><span>Excel PASS: <b class=ok>{passes}</b></span><span>Excel FAIL/gaps: <b class=bad>{len(studies)-passes}</b></span>
 <span>Table sum · Participants: {fmt(tpart)} (secondary)</span><span>Table sum · Files: {fmt(tfiles)} (secondary)</span></div>
-{sorting_section(sorting)}
+{sorting_section(sort_cmp, meta)}
 <h2>Studies vs Excel</h2>
 <table><thead><tr><th>#</th><th>Study</th><th>Name</th><th class=n>UI Part.</th><th class=n>Excel Part.</th>
 <th class=n>UI Files</th><th class=n>Excel Files</th><th>Status</th></tr></thead>
@@ -406,9 +535,11 @@ def report_html(statbar, studies, sorting, meta):
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
     xlsx = excel_path()
-    print(f"URL={URL}\nExcel={xlsx}\nHeadless={HEADLESS}", flush=True)
+    sort_base_path = sorting_baseline_path()
+    print(f"URL={URL}\nExcel={xlsx}\nSortBaseline={sort_base_path}\nHeadless={HEADLESS}", flush=True)
     baseline = load_excel(xlsx)
-    print(f"Excel studies={len(baseline)}", flush=True)
+    sort_baseline = load_sorting_baseline(sort_base_path)
+    print(f"Excel studies={len(baseline)} · sort baseline columns={len(sort_baseline['columns'])}", flush=True)
     with sync_playwright() as p:
         try:
             browser = p.chromium.launch(headless=HEADLESS)
@@ -434,32 +565,39 @@ def main():
         browser.close()
 
     studies = compare(listing, baseline)
+    sort_cmp = compare_sorting(sorting, sort_baseline)
+    sort_col_pass = sum(1 for r in sort_cmp["columns"] if r["status"] == "PASS")
+    sort_col_fail = sum(1 for r in sort_cmp["columns"] if r["status"] != "PASS")
+    if sort_cmp["default"]["status"] != "PASS":
+        sort_col_fail += 1
     meta = {
         "excel": str(xlsx),
+        "sorting_baseline": str(sort_base_path),
         "collected_at": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
         "headless": actual_headless,
         "statbar": statbar,
         "pass": sum(1 for s in studies if s["status"] == "PASS"),
         "fail": sum(1 for s in studies if s["status"] != "PASS"),
-        "sort_pass": sum(1 for r in sorting["results"] if r["status"] == "PASS"),
-        "sort_fail": sum(1 for r in sorting["results"] if r["status"] != "PASS"),
-        "default_sort": {
-            "name": default_sort.get("name"),
-            "direction": default_sort.get("direction"),
-        },
+        "sort_pass": sort_col_pass,
+        "sort_fail": sort_col_fail,
+        "default_sort": sort_cmp["default"],
     }
     (OUT / "studies.json").write_text(
-        json.dumps({"meta": meta, "studies": studies, "sorting": sorting}, indent=2),
+        json.dumps({
+            "meta": meta, "studies": studies,
+            "sorting_live": sorting, "sorting_vs_baseline": sort_cmp,
+        }, indent=2),
         encoding="utf-8",
     )
     path = OUT / "gc-studies-playwright-report.html"
-    path.write_text(report_html(statbar, studies, sorting, meta), encoding="utf-8")
+    path.write_text(report_html(statbar, studies, sort_cmp, meta), encoding="utf-8")
     print(
-        f"Wrote {path}\nCompare PASS={meta['pass']} FAIL={meta['fail']} · "
-        f"Sort PASS={meta['sort_pass']} FAIL={meta['sort_fail']}",
+        f"Wrote {path}\nExcel PASS={meta['pass']} FAIL={meta['fail']} · "
+        f"Sort vs baseline PASS={meta['sort_pass']} FAIL={meta['sort_fail']} · "
+        f"default={sort_cmp['default']['status']}",
         flush=True,
     )
-    return 0 if listing and meta["sort_fail"] == 0 else 1
+    return 0 if listing and meta["sort_fail"] == 0 and meta["fail"] == 0 else 1
 
 
 if __name__ == "__main__":
